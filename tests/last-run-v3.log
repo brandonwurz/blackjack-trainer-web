@@ -1,0 +1,14 @@
+console errors: []
+MISMATCHES: 0
+FAILS: 0
+PASS 200+ shoe invariant: {'rounds': 220, 'splits': 50, 'surrenders': 49, 'insurance': 42, 'busts': 
+console errors: []
+TOTAL 110 FAILS 0
+console/page errors: []
+TOTAL 46 FAILS 0
+   engine evaluations: 24000
+console/page errors: []
+TOTAL 262 FAILS 0
+PASS  icons + manifest served offline 
+console/page errors: []
+TOTAL 22 FAILS 0

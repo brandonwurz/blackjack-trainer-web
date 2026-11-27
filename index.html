@@ -405,6 +405,40 @@ td.diff { box-shadow: inset 0 0 0 3px var(--gold-ink); }
   .actions button.go, button.go-solid, button.go, .level-card button:not(:disabled) { color: #03140a; }
 }
 
+/* ---------- counting drills, index trainer, speed run ---------- */
+.seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg button { border-radius: 999px; padding: 8px 16px; font-weight: 700; border: 1.5px solid var(--line); background: var(--bg-raise); color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+h4.sub-h { margin: 14px 0 4px; font-size: .95rem; font-weight: 800; }
+h4.sub-h:first-child { margin-top: 0; }
+.flash-felt { min-height: 190px; display: flex; align-items: center; justify-content: center; }
+.flash { display: flex; gap: 10px; justify-content: center; align-items: center; min-height: 130px; }
+.flash .pcard { transform: scale(1.35); margin: 0 14px; }
+.flash-q { font-family: var(--mono); font-size: 3rem; font-weight: 800; color: #fff; }
+.clock { font-family: var(--mono); font-weight: 800; font-size: 1.5rem; margin-left: 14px; align-self: center; }
+.convq { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; color: #fff; text-align: center; }
+.convq .k { display: block; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.8); font-weight: 700; }
+.convq b { font-family: var(--mono); font-size: 2.6rem; line-height: 1.1; }
+.convq small { display: block; color: rgba(255,255,255,.8); font-size: .8rem; }
+.cchip { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+.cchip .cv { font-family: var(--mono); font-weight: 800; font-size: .8rem; }
+.speed-hud { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; margin-bottom: 8px; }
+.speed-hud .k { display: block; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); font-weight: 700; }
+.speed-hud b { font-family: var(--mono); font-size: 1.7rem; }
+.tbar, .dbar { margin: 4px 0; }
+.tbar i { background: var(--gold); }
+.dbar i { background: var(--green); transition: none; }
+.dbar i.over { background: var(--red); }
+.dlabel { font-size: .8rem; color: var(--ink-soft); font-weight: 700; margin-top: 6px; }
+.rec-row { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: .92rem; }
+.rec-row .nm { font-weight: 800; min-width: 100px; }
+.idx-table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: .86rem; }
+.idx-table th, .idx-table td { padding: 6px 9px; border-bottom: 1px solid var(--line); text-align: left; }
+.idx-table thead th { background: var(--bg-sink); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+.idx-table td.num { font-family: var(--mono); font-weight: 800; }
+@media (max-width: 520px) { .flash .pcard { transform: scale(1.15); margin: 0 8px; } .speed-hud b { font-size: 1.3rem; } .convq b { font-size: 2.1rem; } }
+button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
+
     </style>
   </head>
   <body>
@@ -443,6 +477,9 @@ td.diff { box-shadow: inset 0 0 0 3px var(--gold-ink); }
         <nav class="tabs" role="tablist" aria-label="Trainer sections" id="tabs">
           <button role="tab" id="tab-path" data-view="path" aria-controls="view-path" aria-selected="true" tabindex="0">Level Path</button>
           <button role="tab" id="tab-drill" data-view="drill" aria-controls="view-drill" aria-selected="false" tabindex="-1">Free Drill</button>
+          <button role="tab" id="tab-speed" data-view="speed" aria-controls="view-speed" aria-selected="false" tabindex="-1">Speed Run</button>
+          <button role="tab" id="tab-count" data-view="count" aria-controls="view-count" aria-selected="false" tabindex="-1">Count Drills</button>
+          <button role="tab" id="tab-index" data-view="index" aria-controls="view-index" aria-selected="false" tabindex="-1">Index Trainer</button>
           <button role="tab" id="tab-review" data-view="review" aria-controls="view-review" aria-selected="false" tabindex="-1">Review &amp; Stats</button>
           <button role="tab" id="tab-sim" data-view="sim" aria-controls="view-sim" aria-selected="false" tabindex="-1">Table Simulator <span class="lock" id="lock-sim"></span></button>
           <button role="tab" id="tab-lab" data-view="lab" aria-controls="view-lab" aria-selected="false" tabindex="-1">Bankroll Lab <span class="lock" id="lock-lab"></span></button>
@@ -488,6 +525,60 @@ td.diff { box-shadow: inset 0 0 0 3px var(--gold-ink); }
           <p class="note">Hands you miss come back on their own (about 1 in 4 questions) until you get them right a few times in a row. See the Review &amp; Stats tab.</p>
         </div>
         <div id="drill-stage"></div>
+      </section>
+
+      <!-- ============ SPEED RUN ============ -->
+      <section class="view" id="view-speed" role="tabpanel" aria-labelledby="tab-speed">
+        <h2 class="view-title">Speed run — timed basic strategy</h2>
+        <p class="view-sub" id="speed-sub"></p>
+        <div class="panel">
+          <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 240px));">
+            <div class="field"><label for="sp-dur">Run length</label>
+              <select id="sp-dur"><option value="30">30 seconds</option><option value="60" selected>60 seconds</option><option value="120">2 minutes</option></select></div>
+            <div class="field"><label for="sp-target">Speed target per decision</label>
+              <select id="sp-target"><option value="3000">3.0 s — learning</option><option value="2000" selected>2.0 s — casino pace</option><option value="1500">1.5 s — sharp</option><option value="1000">1.0 s — automatic</option></select></div>
+          </div>
+          <p class="note">Score: +10 for every right play, +5 more when it lands inside your target, −5 for every miss. Misses join your review queue like any other drill. Best runs are saved on this device.</p>
+          <div class="btn-row"><button class="go-solid" id="sp-start">Start run <kbd>Enter</kbd></button></div>
+        </div>
+        <div id="speed-stage"></div>
+        <div class="panel"><h3>Best runs</h3><div id="speed-best"></div></div>
+      </section>
+
+      <!-- ============ COUNT DRILLS ============ -->
+      <section class="view" id="view-count" role="tabpanel" aria-labelledby="tab-count">
+        <h2 class="view-title">Count drills — Hi-Lo</h2>
+        <p class="view-sub">Twos through sixes are +1, sevens through nines are 0, tens and aces are −1. Three drills: keep a running count of a dealt sequence at your chosen speed, count down a whole deck against the clock, and convert a running count to a true count out of eight decks.</p>
+        <div class="panel">
+          <div class="seg" role="group" aria-label="Drill type" id="cd-modes">
+            <button type="button" data-cmode="run" aria-pressed="true">Running count</button>
+            <button type="button" data-cmode="deck" aria-pressed="false">Deck countdown</button>
+            <button type="button" data-cmode="conv" aria-pressed="false">True count (÷ 8 decks)</button>
+          </div>
+          <div class="form-grid" id="cd-opts" style="grid-template-columns: repeat(auto-fit, minmax(160px, 260px)); margin-top:10px;"></div>
+          <p class="note" id="cd-note"></p>
+          <div class="btn-row"><button class="go-solid" id="cd-start">Start <kbd>Enter</kbd></button></div>
+        </div>
+        <div id="count-stage"></div>
+        <div class="panel"><h3>Counting accuracy</h3><div id="count-stats"></div></div>
+      </section>
+
+      <!-- ============ INDEX TRAINER ============ -->
+      <section class="view" id="view-index" role="tabpanel" aria-labelledby="tab-index">
+        <h2 class="view-title">Index trainer — Illustrious 18 + Fab 4</h2>
+        <p class="view-sub" id="index-sub"></p>
+        <div class="panel">
+          <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 260px));">
+            <div class="field"><label for="ix-mode">Cards to show</label>
+              <select id="ix-mode"><option value="all" selected>Everything</option><option value="i18">Illustrious 18 only</option><option value="fab4">Fab 4 surrenders only</option><option value="misses">My missed cards only</option></select></div>
+          </div>
+          <p class="note" id="ix-summary"></p>
+        </div>
+        <div id="index-stage"></div>
+        <div class="panel"><h3>Your index list</h3>
+          <p class="note">Exactly the numbers this trainer grades against, for the rules you have set. At or above the index you make the deviation; below it you play the other way.</p>
+          <div class="chart-scroll" tabindex="0" role="region" aria-label="Index list, scrolls sideways on small screens"><table class="idx-table" id="ix-table"></table></div></div>
+        <div class="panel"><h3>Accuracy by index</h3><div id="ix-stats"></div></div>
       </section>
 
       <!-- ============ REVIEW & STATS ============ -->
@@ -721,6 +812,9 @@ function freshState(){
     drillQ: 0, drillRight: 0, mistakeCost: 0,
     fam: {}, srs: [], qn: 0, mastered: 0,
     sim: { bank: 1000, rebuys: 0, stats: { played: 0, w: 0, l: 0, p: 0, graded: 0, right: 0 } },
+    cnt: { run: { n:0, r:0, bySpeed:{}, fastest:null }, deck: { n:0, r:0, best:{}, last:null, hist:[] }, conv: { n:0, r:0, byMode:{} } },
+    idx: { n:0, r:0, qn:0, mastered:0, stats:{}, srs:[] },
+    spd: { runs:0, dur:60, target:2000, best:{}, hist:[] },
     curLevel: null
   };
 }
@@ -736,6 +830,11 @@ function loadState(){
     if(o.fam && typeof o.fam === "object") S.fam = o.fam;
     if(Array.isArray(o.srs)) S.srs = o.srs;
     if(o.rules){ S.rules = { h17: !!o.rules.h17, das: o.rules.das !== false, ls: o.rules.ls !== false }; }
+    if(o.cnt && typeof o.cnt === "object"){
+      ["run","deck","conv"].forEach(function(k){ if(o.cnt[k] && typeof o.cnt[k] === "object") for(var kk in o.cnt[k]) S.cnt[k][kk] = o.cnt[k][kk]; });
+    }
+    if(o.idx && typeof o.idx === "object"){ for(var ik in o.idx) S.idx[ik] = o.idx[ik]; if(!Array.isArray(S.idx.srs)) S.idx.srs = []; }
+    if(o.spd && typeof o.spd === "object"){ for(var sk in o.spd) S.spd[sk] = o.spd[sk]; if(!Array.isArray(S.spd.hist)) S.spd.hist = []; if(!S.spd.best || typeof S.spd.best !== "object") S.spd.best = {}; }
     if(o.sim){ S.sim = { bank: +o.sim.bank, rebuys: +o.sim.rebuys || 0, stats: o.sim.stats || f.sim.stats }; if(!isFinite(S.sim.bank)) S.sim.bank = 1000; }
   } catch(e){ storageOK = false; }
 }
@@ -743,7 +842,7 @@ function saveState(){
   try {
     var o = { rules: S.rules, unlocked: S.unlocked, passed: S.passed, unlockAll: S.unlockAll,
       drillQ: S.drillQ, drillRight: S.drillRight, mistakeCost: S.mistakeCost,
-      fam: S.fam, srs: S.srs, qn: S.qn, mastered: S.mastered, sim: S.sim };
+      fam: S.fam, srs: S.srs, qn: S.qn, mastered: S.mastered, sim: S.sim, cnt: S.cnt, idx: S.idx, spd: S.spd };
     window.localStorage.setItem(STORE_KEY, JSON.stringify(o));
   } catch(e){ storageOK = false; }
 }
@@ -1018,6 +1117,11 @@ function showView(name, focusTab){
   document.querySelectorAll("section.view").forEach(function(v){ v.classList.remove("active"); });
   $("view-" + name).classList.add("active");
   window.scrollTo({ top: 0, behavior: smooth() });
+  if(name !== "count" && typeof CD !== "undefined" && CD.running){ cdAbort(); cdStageEmpty(); }
+  if(name !== "speed" && typeof SP !== "undefined" && SP.running) spdAbort("");
+  if(name === "count") cdRenderStats();
+  if(name === "index"){ ixSummary(); ixRenderStats(); }
+  if(name === "speed") spdRenderBest();
   if(name === "review") renderReview();
   if(name === "sim") renderSim();
   if(name === "charts") updateChartHint();
@@ -1068,6 +1172,8 @@ function onRulesChanged(){
   if(typeof drillRestart === "function") drillRestart();
   if(typeof renderSim === "function" && SIM) renderSim();
   if(typeof renderReview === "function") renderReview();
+  if(typeof ixRulesChanged === "function") ixRulesChanged();
+  if(typeof spdRulesChanged === "function") spdRulesChanged();
 }
 function readRulesFromUI(){
   S.rules = { h17: $("rule-soft17").value === "H", das: $("rule-das").value === "1", ls: $("rule-ls").value === "1" };
@@ -1940,6 +2046,531 @@ function initSim(){
   renderSim();
 }
 
+/* ================= shared bits for the counting, index and speed features ================= */
+function sgn(n){ return (n > 0 ? "+" : "") + n; }
+function pctOf(r, n){ return n ? Math.round(100 * r / n) : 0; }
+function fmtSecs(ms){ return (ms / 1000).toFixed(1) + " s"; }
+function fmtClock(ms){ var t = ms / 1000, m = Math.floor(t / 60), r = t - m * 60; return m ? m + ":" + (r < 10 ? "0" : "") + r.toFixed(1) : r.toFixed(1) + " s"; }
+function accRow(label, r, n, noteOverride){
+  var p = pctOf(r, n), cls = !n ? "" : p < 70 ? "weak" : p < 90 ? "mid" : "";
+  return '<div class="fam-row"><span class="nm">' + esc(label) + '</span><div class="bar" role="img" aria-label="' + (n ? p + ' percent' : 'no data') + '"><i class="' + cls + '" style="width:' + p + '%"></i></div><span class="ct">' + (noteOverride || (n ? p + "% · " + r + "/" + n : "no data yet")) + '</span></div>';
+}
+var ACTION_WORD = { H:"Hit", S:"Stand", D:"Double", P:"Split", R:"Surrender", I:"Take insurance", N:"No insurance" };
+
+/* ================= COUNT DRILLS ================= */
+var CD = { mode: "run", timer: null, tick: null, running: false, opts: { speed: 1000, len: 20, flip: 1, conv: "decks" } };
+var CD_SPEEDS = [[2000,"Slow — a card every 2 s"],[1500,"A card every 1.5 s"],[1000,"A card per second"],[700,"Brisk — 0.7 s a card"],[500,"Fast — 0.5 s a card"],[350,"Pro — 0.35 s a card"]];
+function cdAbort(){
+  if(CD.timer){ clearTimeout(CD.timer); CD.timer = null; }
+  if(CD.tick){ clearInterval(CD.tick); CD.tick = null; }
+  CD.running = false;
+}
+function cdStageEmpty(){ var st = $("count-stage"); if(st) st.innerHTML = ""; }
+function cdSetMode(m){
+  cdAbort(); CD.mode = m;
+  document.querySelectorAll("#cd-modes button").forEach(function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-cmode") === m ? "true" : "false"); });
+  cdRenderOpts(); cdStageEmpty();
+}
+function cdRenderOpts(){
+  var o = $("cd-opts"), m = CD.mode, h = "";
+  if(m === "run"){
+    h = '<div class="field"><label for="cd-speed">Speed</label><select id="cd-speed">' + CD_SPEEDS.map(function(s){ return '<option value="' + s[0] + '"' + (s[0] === CD.opts.speed ? " selected" : "") + '>' + s[1] + '</option>'; }).join("") + '</select></div>'
+      + '<div class="field"><label for="cd-len">Cards in the sequence</label><select id="cd-len">' + [10,20,30,52].map(function(n){ return '<option value="' + n + '"' + (n === CD.opts.len ? " selected" : "") + '>' + n + ' cards</option>'; }).join("") + '</select></div>';
+    $("cd-note").textContent = "Cards flash one at a time, starting from a count of 0. Keep the running count in your head, then enter it when the cards stop. Clean runs at 20 or more cards set your fastest-speed record.";
+  } else if(m === "deck"){
+    h = '<div class="field"><label for="cd-flip">Cards per flip</label><select id="cd-flip">' + [1,2,3].map(function(n){ return '<option value="' + n + '"' + (n === CD.opts.flip ? " selected" : "") + '>' + n + (n === 1 ? " card (single)" : " cards at once") + '</option>'; }).join("") + '</select></div>';
+    $("cd-note").textContent = "A full 52-card deck, one flip at a time at your own pace. The clock starts on the first card. A whole deck always nets to zero, so you finish on 0 — a clean deck saves your time.";
+  } else {
+    h = '<div class="field"><label for="cd-conv">What you are given</label><select id="cd-conv"><option value="decks"' + (CD.opts.conv === "decks" ? " selected" : "") + '>Running count and decks left</option><option value="dealt"' + (CD.opts.conv === "dealt" ? " selected" : "") + '>Running count and cards dealt (work out the decks left)</option></select></div>';
+    $("cd-note").textContent = "True count = running count ÷ decks left out of 8, rounded to the nearest whole number. The shoe is 416 cards (8 × 52). Questions never land on an exact half.";
+  }
+  o.innerHTML = h;
+  var sp = $("cd-speed"); if(sp) sp.addEventListener("change", function(){ CD.opts.speed = parseInt(sp.value, 10); });
+  var ln = $("cd-len"); if(ln) ln.addEventListener("change", function(){ CD.opts.len = parseInt(ln.value, 10); });
+  var fl = $("cd-flip"); if(fl) fl.addEventListener("change", function(){ CD.opts.flip = parseInt(fl.value, 10); });
+  var cv = $("cd-conv"); if(cv) cv.addEventListener("change", function(){ CD.opts.conv = cv.value; });
+  $("cd-start").innerHTML = (m === "conv" ? "Start questions" : "Start") + ' <kbd>Enter</kbd>';
+}
+function cdStepper(initial, onSubmit){
+  var g = initial, box = $("cd-answer");
+  box.innerHTML = '<div class="stepper"><button type="button" id="cd-minus" aria-label="Minus one">−</button><div class="val" aria-live="polite"><span id="cd-val">0</span></div><button type="button" id="cd-plus" aria-label="Plus one">+</button></div>'
+    + '<div class="actions"><button class="go" id="cd-submit">Lock it in<kbd>Enter</kbd></button></div>'
+    + '<p class="kbd-hint">Keys: <kbd>+</kbd> / <kbd>−</kbd> (or ↑ ↓) change the number · <kbd>Enter</kbd> lock it in · <kbd>Esc</kbd> stop</p>';
+  function show(){ $("cd-val").textContent = sgn(g); }
+  show();
+  $("cd-minus").addEventListener("click", function(){ g--; show(); });
+  $("cd-plus").addEventListener("click", function(){ g++; show(); });
+  $("cd-submit").addEventListener("click", function(){
+    $("cd-submit").disabled = true; $("cd-minus").disabled = true; $("cd-plus").disabled = true;
+    onSubmit(g);
+  });
+  $("cd-submit").focus({ preventScroll: true });
+}
+function cdChips(cards){
+  return '<div class="count-row">' + cards.map(function(c){ var v = hiLo(c.rank); return '<span class="cchip">' + cardHTML(c, { small: true }) + '<span class="cv">' + (v > 0 ? "+1" : v < 0 ? "−1" : "0") + '</span></span>'; }).join("") + '</div>';
+}
+function cdShell(label){
+  $("count-stage").innerHTML = '<div class="panel"><div class="progress-line"><span id="cd-prog"></span><div class="bar"><i id="cd-bar"></i></div><span id="cd-lbl">' + label + '</span></div>'
+    + '<div class="felt flash-felt"><div class="flash" id="cd-flash"></div></div><p class="note" id="cd-msg"></p><div id="cd-answer"></div>'
+    + '<div class="feedback" id="cd-fb" role="status" aria-live="polite"></div><div class="actions" id="cd-after"></div></div>';
+  cdStopBtn();
+  $("count-stage").scrollIntoView({ behavior: smooth(), block: "nearest" });
+}
+function cdStopBtn(prepend){
+  var a = $("cd-after");
+  if(!$("cd-stop")){ var b = document.createElement("button"); b.type = "button"; b.id = "cd-stop"; b.innerHTML = 'Stop <kbd>Esc</kbd>'; a.appendChild(b); }
+  $("cd-stop").onclick = function(){ cdAbort(); cdStageEmpty(); };
+}
+function cdFinishRow(againText){
+  $("cd-after").innerHTML = '<button class="go" id="cd-again">' + againText + '<kbd>Enter</kbd></button>';
+  cdStopBtn();
+  $("cd-again").addEventListener("click", cdStart);
+  $("cd-again").focus({ preventScroll: true });
+}
+/* --- running count of a dealt sequence --- */
+function cdStartRun(){
+  var speed = CD.opts.speed, len = CD.opts.len, cards = [], rc = 0, i;
+  for(i = 0; i < len; i++){ var c = makeCard(randomRank()); cards.push(c); rc += hiLo(c.rank); }
+  cdShell("Running count");
+  CD.running = true;
+  var idx = 0;
+  $("cd-msg").textContent = "Get ready…";
+  function flash(){
+    if(!CD.running) return;
+    if(idx >= len){ $("cd-flash").innerHTML = '<div class="flash-q">?</div>'; $("cd-bar").style.width = "100%"; ask(); return; }
+    $("cd-flash").innerHTML = cardHTML(cards[idx]);
+    $("cd-prog").textContent = "Card " + (idx + 1) + " of " + len; $("cd-bar").style.width = (100 * idx / len) + "%";
+    idx++;
+    CD.timer = setTimeout(flash, speed);
+  }
+  function ask(){
+    CD.running = false; CD.timer = null;
+    $("cd-msg").textContent = "What is the running count? (You started at 0.)";
+    cdStepper(0, function(g){
+      var ok = g === rc, R = S.cnt.run, sp = R.bySpeed[speed] || (R.bySpeed[speed] = { n: 0, r: 0 });
+      R.n++; sp.n++; if(ok){ R.r++; sp.r++; if(len >= 20 && (R.fastest === null || speed < R.fastest)) R.fastest = speed; }
+      saveState(); cdRenderStats();
+      var fb = $("cd-fb");
+      fb.className = "feedback show " + (ok ? "right" : "wrong");
+      fb.innerHTML = '<div class="verdict">' + (ok ? "Right — the running count is " + sgn(rc) + "." : "The running count is " + sgn(rc) + ", not " + sgn(g) + ".") + '</div>'
+        + (ok ? "Clean run at " + fmtSecs(speed) + " a card." : "Tag every card as you go. Speed comes after accuracy — drop one notch and own it.") + cdChips(cards);
+      cdFinishRow("Another run");
+    });
+  }
+  CD.timer = setTimeout(flash, 1000);
+}
+/* --- count down a whole deck against the clock --- */
+function cdFullDeck(){
+  var d = [], r, su;
+  for(r = 0; r < RANKS.length; r++) for(su = 0; su < SUITS.length; su++) d.push({ rank: RANKS[r], suit: SUITS[su] });
+  return shuffle(d);
+}
+function cdStartDeck(){
+  var flip = CD.opts.flip, deck = cdFullDeck(), pos = 0, t0 = null;
+  cdShell("Deck countdown");
+  CD.running = true;
+  $("cd-msg").innerHTML = "Flip with the button, <kbd>Space</kbd> or <kbd>→</kbd>. The clock starts on the first card.";
+  $("cd-answer").innerHTML = '<div class="actions"><button class="go" id="cd-next">Next ' + (flip > 1 ? flip + " cards" : "card") + '<kbd>Space</kbd></button><span class="clock" id="cd-clock" aria-live="off">0.0 s</span></div>';
+  function showCards(){
+    var chunk = deck.slice(pos, pos + flip);
+    $("cd-flash").innerHTML = chunk.map(function(c){ return cardHTML(c); }).join("");
+    $("cd-prog").textContent = "Card " + Math.min(52, pos + chunk.length) + " of 52"; $("cd-bar").style.width = (100 * pos / 52) + "%";
+  }
+  $("cd-flash").innerHTML = '<div class="flash-q">▶</div>';
+  $("cd-next").addEventListener("click", function(){
+    if(!CD.running) return;
+    if(t0 === null){
+      t0 = Date.now();
+      CD.tick = setInterval(function(){ var el = $("cd-clock"); if(el) el.textContent = fmtClock(Date.now() - t0); }, 100);
+    } else { pos += flip; }
+    if(pos >= 52){ finish(); return; }
+    showCards();
+  });
+  $("cd-next").focus({ preventScroll: true });
+  function finish(){
+    var ms = Date.now() - t0;
+    cdAbort();
+    $("cd-flash").innerHTML = '<div class="flash-q">?</div>'; $("cd-bar").style.width = "100%";
+    $("cd-prog").textContent = "All 52 cards";
+    $("cd-msg").textContent = "Deck finished in " + fmtClock(ms) + ". What is your running count?";
+    cdStepper(0, function(g){
+      var ok = g === 0, D = S.cnt.deck, key = String(flip);
+      D.n++; if(ok){ D.r++; if(!D.best[key] || ms < D.best[key]) D.best[key] = ms; }
+      D.last = { ms: ms, ok: ok, flip: flip };
+      D.hist.unshift({ ms: ms, ok: ok, flip: flip }); if(D.hist.length > 10) D.hist.length = 10;
+      saveState(); cdRenderStats();
+      var fb = $("cd-fb");
+      fb.className = "feedback show " + (ok ? "right" : "wrong");
+      fb.innerHTML = '<div class="verdict">' + (ok ? "Clean deck — " + fmtClock(ms) + (D.best[key] === ms ? " (new best for " + flip + "-card flips!)" : "") + "." : "That's " + sgn(g) + ", but a full deck always ends at 0. This time doesn't count.") + '</div>'
+        + "A deck holds 20 low cards (+1), 20 high cards (−1) and 12 neutral cards, so it nets to zero."
+        + (ok ? "" : " Slow down a notch and keep your eyes on the cards, not the count.");
+      cdFinishRow("Another deck");
+    });
+  }
+}
+/* --- running count to true count --- */
+function cdConvQuestion(mode){
+  var decks, dealt = null, rc, tc, raw, guard = 0;
+  do {
+    if(mode === "dealt"){ dealt = 26 * (1 + Math.floor(Math.random() * 14)); decks = (SHOE_SIZE - dealt) / 52; }
+    else decks = 1 + 0.5 * Math.floor(Math.random() * 14);
+    var target = pickOf([-5,-4,-3,-2,-1,0,1,2,2,3,3,4,4,5,6,7,8,10]);
+    rc = Math.round(target * decks + (Math.random() - 0.5) * decks);
+    raw = rc / decks;
+    guard++;
+  } while((Math.abs(Math.abs(raw - Math.trunc(raw)) - 0.5) < 0.06 || Math.abs(rc) > 60) && guard < 200);
+  tc = roundTC(raw);
+  return { rc: rc, decks: decks, dealt: dealt, raw: raw, tc: tc };
+}
+function cdStartConv(){
+  var mode = CD.opts.conv, sessN = 0, sessR = 0, streak = 0;
+  cdShell("True count");
+  CD.running = true;
+  function step(){
+    var Q = cdConvQuestion(mode);
+    $("cd-fb").className = "feedback"; $("cd-fb").innerHTML = ""; $("cd-after").innerHTML = ""; cdStopBtn();
+    $("cd-prog").textContent = "Question " + (sessN + 1) + (sessN ? " · " + sessR + " right" : ""); $("cd-bar").style.width = (sessN ? 100 * sessR / sessN : 0) + "%";
+    $("cd-flash").innerHTML = '<div class="convq"><div><span class="k">Running count</span><b id="cd-q-rc">' + sgn(Q.rc) + '</b></div>'
+      + (mode === "dealt" ? '<div><span class="k">Cards dealt</span><b id="cd-q-dealt">' + Q.dealt + '</b><small>of 416</small></div>' : '<div><span class="k">Decks left</span><b id="cd-q-decks">' + Q.decks.toFixed(1) + '</b><small>of 8</small></div>') + '</div>';
+    $("cd-msg").textContent = "What is the true count? (whole number, rounded)";
+    cdStepper(0, function(g){
+      var ok = g === Q.tc, C = S.cnt.conv, m = C.byMode[mode] || (C.byMode[mode] = { n: 0, r: 0 });
+      C.n++; m.n++; sessN++; if(ok){ C.r++; m.r++; sessR++; streak++; } else streak = 0;
+      saveState(); cdRenderStats();
+      var how = (mode === "dealt" ? SHOE_SIZE + " − " + Q.dealt + " = " + (SHOE_SIZE - Q.dealt) + " cards left ÷ 52 = " + Q.decks.toFixed(1) + " decks. " : "")
+        + sgn(Q.rc) + " ÷ " + Q.decks.toFixed(1) + " = " + (Math.round(Q.raw * 100) / 100) + ", which rounds to a true count of " + sgn(Q.tc) + ".";
+      var fb = $("cd-fb");
+      fb.className = "feedback show " + (ok ? "right" : "wrong");
+      fb.innerHTML = '<div class="verdict">' + (ok ? "Right — true count " + sgn(Q.tc) + "." : "True count is " + sgn(Q.tc) + ", not " + sgn(g) + ".") + '</div>' + how + (streak > 1 ? " Streak: " + streak + "." : "");
+      $("cd-after").innerHTML = '<button class="go" id="cd-nextq">Next question<kbd>Enter</kbd></button>';
+      cdStopBtn();
+      $("cd-nextq").addEventListener("click", step);
+      $("cd-nextq").focus({ preventScroll: true });
+    });
+  }
+  step();
+}
+function cdStart(){
+  cdAbort();
+  if(CD.mode === "run") cdStartRun(); else if(CD.mode === "deck") cdStartDeck(); else cdStartConv();
+}
+function cdRenderStats(){
+  var R = S.cnt.run, D = S.cnt.deck, C = S.cnt.conv, h = '<h4 class="sub-h">Running count of a sequence</h4>';
+  h += accRow("All speeds", R.r, R.n);
+  CD_SPEEDS.forEach(function(s){ var b = R.bySpeed[s[0]]; if(b && b.n) h += accRow(fmtSecs(s[0]) + " a card", b.r, b.n); });
+  h += '<p class="note" id="cd-fastest">' + (R.fastest ? "Fastest clean run (20+ cards): <b>" + fmtSecs(R.fastest) + " a card</b>." : "No clean 20+ card run saved yet.") + '</p>';
+  h += '<h4 class="sub-h">Deck countdown</h4>' + accRow("Clean decks (finished on 0)", D.r, D.n);
+  var bests = [1,2,3].filter(function(f){ return D.best[String(f)]; }).map(function(f){ return f + "-card flips: <b>" + fmtClock(D.best[String(f)]) + "</b>"; });
+  h += '<p class="note" id="cd-deck-best">' + (bests.length ? "Best clean times — " + bests.join(" · ") + "." : "No clean deck time saved yet.") + (D.hist.length ? " Recent: " + D.hist.slice(0, 5).map(function(x){ return fmtClock(x.ms) + (x.ok ? "" : " ✗"); }).join(", ") + "." : "") + '</p>';
+  h += '<h4 class="sub-h">Running count → true count (8 decks)</h4>' + accRow("All questions", C.r, C.n);
+  [["decks","Decks left given"],["dealt","Cards dealt given"]].forEach(function(m){ var b = C.byMode[m[0]]; if(b && b.n) h += accRow(m[1], b.r, b.n); });
+  $("count-stats").innerHTML = h;
+}
+function initCount(){
+  document.querySelectorAll("#cd-modes button").forEach(function(b){ b.addEventListener("click", function(){ cdSetMode(b.getAttribute("data-cmode")); }); });
+  $("cd-start").addEventListener("click", cdStart);
+  cdRenderOpts(); cdRenderStats();
+}
+
+/* ================= INDEX TRAINER ================= */
+/* Hi-Lo indices, 6–8 decks. thr is the whole-number true count: at or above it you play `hi`, below it `lo`.
+   Surrender-offered games turn 16v10, 15v10 and 16v9 into surrenders at every count on a two-card hand, so their stand
+   indices show up on a 3-card hand only, and the Fab 4 surrender indices appear instead. */
+function indexEntries(rules){
+  rules = rules || S.rules;
+  var h17 = !!rules.h17, ls = !!rules.ls, E = [];
+  function add(id, grp, name, o){ o.id = id; o.grp = grp; o.name = name; E.push(o); }
+  add("ins", "i18", "Insurance", { kind: "ins", up: "A", thr: 3, lo: "N", hi: "I", handLabel: "any hand" });
+  if(ls){
+    add("16v10x3", "i18", "16 vs 10 (3 cards)", { total: 16, n: 3, up: "10", thr: 0, lo: "H", hi: "S" });
+    add("15v10x3", "i18", "15 vs 10 (3 cards)", { total: 15, n: 3, up: "10", thr: 4, lo: "H", hi: "S" });
+    add("16v9x3",  "i18", "16 vs 9 (3 cards)",  { total: 16, n: 3, up: "9",  thr: 5, lo: "H", hi: "S" });
+  } else {
+    add("16v10", "i18", "16 vs 10", { total: 16, n: 2, up: "10", thr: 0, lo: "H", hi: "S" });
+    add("15v10", "i18", "15 vs 10", { total: 15, n: 2, up: "10", thr: 4, lo: "H", hi: "S" });
+    add("16v9",  "i18", "16 vs 9",  { total: 16, n: 2, up: "9",  thr: 5, lo: "H", hi: "S" });
+  }
+  add("tt5", "i18", "10-10 vs 5", { pair10: true, n: 2, up: "5", thr: 5, lo: "S", hi: "P" });
+  add("tt6", "i18", "10-10 vs 6", { pair10: true, n: 2, up: "6", thr: 4, lo: "S", hi: "P" });
+  add("10v10", "i18", "10 vs 10", { total: 10, n: 2, up: "10", thr: 4, lo: "H", hi: "D" });
+  add("11vA",  "i18", "11 vs A",  { total: 11, n: 2, up: "A", thr: h17 ? -1 : 1, lo: "H", hi: "D" });
+  add("9v2",   "i18", "9 vs 2",   { total: 9, n: 2, up: "2", thr: 1, lo: "H", hi: "D" });
+  add("10vA",  "i18", "10 vs A",  { total: 10, n: 2, up: "A", thr: h17 ? 3 : 4, lo: "H", hi: "D" });
+  add("9v7",   "i18", "9 vs 7",   { total: 9, n: 2, up: "7", thr: 3, lo: "H", hi: "D" });
+  add("12v3",  "i18", "12 vs 3",  { total: 12, n: 2, up: "3", thr: 2, lo: "H", hi: "S" });
+  add("12v2",  "i18", "12 vs 2",  { total: 12, n: 2, up: "2", thr: 3, lo: "H", hi: "S" });
+  add("13v2",  "i18", "13 vs 2",  { total: 13, n: 2, up: "2", thr: -1, lo: "H", hi: "S" });
+  add("12v4",  "i18", "12 vs 4",  { total: 12, n: 2, up: "4", thr: 0, lo: "H", hi: "S" });
+  add("12v5",  "i18", "12 vs 5",  { total: 12, n: 2, up: "5", thr: -2, lo: "H", hi: "S" });
+  add("12v6",  "i18", "12 vs 6",  { total: 12, n: 2, up: "6", thr: -1, lo: "H", hi: "S" });
+  add("13v3",  "i18", "13 vs 3",  { total: 13, n: 2, up: "3", thr: -2, lo: "H", hi: "S" });
+  if(ls){
+    add("14v10f", "fab4", "14 vs 10", { total: 14, n: 2, up: "10", thr: 3, lo: "H", hi: "R" });
+    add("15v10f", "fab4", "15 vs 10", { total: 15, n: 2, up: "10", thr: 0, lo: "H", hi: "R" });
+    add("15v9f",  "fab4", "15 vs 9",  { total: 15, n: 2, up: "9", thr: 2, lo: "H", hi: "R" });
+    add("15vAf",  "fab4", "15 vs A",  { total: 15, n: 2, up: "A", thr: h17 ? -1 : 1, lo: "H", hi: "R" });
+  }
+  E.forEach(function(e){
+    e.text = e.kind === "ins" ? "Take insurance at " + sgn(e.thr) + " or higher; otherwise decline"
+      : ACTION_WORD[e.hi] + " at " + sgn(e.thr) + " or higher; " + ACTION_WORD[e.lo].toLowerCase() + " below";
+    e.handLabel = e.handLabel || (e.pair10 ? "10-10 (any two tens)" : (e.n === 3 ? "Hard " + e.total + ", three cards" : "Hard " + e.total));
+  });
+  return E;
+}
+function ixEntryById(id, rules){ var l = indexEntries(rules); for(var i = 0; i < l.length; i++) if(l[i].id === id) return l[i]; return null; }
+function ixRanks(e){
+  if(e.kind === "ins") { var a, b; do { a = mapTen(pickOf(["2","3","4","5","6","7","8","9","10"])); b = pickOf(["2","3","4","5","6","7","8","9"]); } while(false); return [a, b]; }
+  if(e.pair10){ var t = pickOf(TENS); return [t, t]; }
+  if(e.n === 3){
+    var x, y, z, g = 0;
+    do { x = 2 + Math.floor(Math.random() * 9); y = 2 + Math.floor(Math.random() * 9); z = e.total - x - y; g++; } while((z < 2 || z > 10) && g < 500);
+    return [mapTen(String(x)), mapTen(String(y)), mapTen(String(z))];
+  }
+  return hardPair(e.total);
+}
+function ixCtx(cards, rules){ var two = cards.length === 2; return { canDouble: two, canSplit: two, canSurrender: two && !!rules.ls }; }
+function ixExpected(e, tc, cards, up, rules){
+  rules = rules || S.rules;
+  if(e.kind === "ins") return insuranceCorrect(tc) ? "I" : "N";
+  return decide(cards, up, tc, rules, ixCtx(cards, rules)).play;
+}
+function ixPickTC(e){
+  var thr = e.thr, c = [thr - 3, thr - 2, thr - 1, thr - 1, thr, thr, thr, thr + 1, thr + 2];
+  var tc = pickOf(c); return Math.max(-9, Math.min(14, tc));
+}
+var IX = { q: null, answered: false, sessN: 0, sessR: 0, streak: 0 };
+function ixFindSrs(key){ for(var i = 0; i < S.idx.srs.length; i++) if(S.idx.srs[i].k === key) return S.idx.srs[i]; return null; }
+function ixRecord(e, tc, ok){
+  var I = S.idx; I.qn++; I.n++; if(ok) I.r++;
+  var st = I.stats[e.id] || (I.stats[e.id] = { n: 0, r: 0 }); st.n++; if(ok) st.r++;
+  var key = e.id + "@" + tc, it = ixFindSrs(key), info = { added: false, queued: !!it, box: 0, mastered: false };
+  if(!ok){
+    if(it){ it.box = 0; it.miss++; it.due = I.qn + SRS_GAPS[0]; }
+    else { I.srs.push({ k: key, id: e.id, tc: tc, box: 0, due: I.qn + SRS_GAPS[0], miss: 1 }); info.added = true; }
+  } else if(it){
+    it.box++;
+    if(it.box >= 5){ I.srs.splice(I.srs.indexOf(it), 1); I.mastered++; info.mastered = true; }
+    else { it.due = I.qn + SRS_GAPS[it.box]; info.box = it.box; }
+  }
+  saveState();
+  return info;
+}
+function ixQueue(){
+  var ids = {}; indexEntries().forEach(function(e){ ids[e.id] = e; });
+  return S.idx.srs.filter(function(it){ return ids[it.id]; });
+}
+function ixPick(){
+  var mode = $("ix-mode").value, ents = indexEntries(), byId = {}; ents.forEach(function(e){ byId[e.id] = e; });
+  var queue = ixQueue(), due = queue.filter(function(it){ return it.due <= S.idx.qn; });
+  due.sort(function(a, b){ return a.box - b.box || a.due - b.due; });
+  if(mode === "misses"){
+    if(!queue.length) return { empty: "Your missed-card queue is empty — nothing to review. Switch to “Everything” to keep drilling." };
+    var it = due.length ? due[0] : queue.slice().sort(function(a, b){ return a.due - b.due; })[0];
+    return { entry: byId[it.id], tc: it.tc, srs: true };
+  }
+  var pool = ents.filter(function(e){ return mode === "all" || e.grp === mode; });
+  if(!pool.length) return { empty: "Fab 4 surrender indices need late surrender. Turn it on from the Rules button and they appear here." };
+  if(mode === "all" && due.length && Math.random() < 0.4) return { entry: byId[due[0].id], tc: due[0].tc, srs: true };
+  var e = pickOf(pool);
+  return { entry: e, tc: ixPickTC(e) };
+}
+function ixSummary(){
+  var I = S.idx, q = ixQueue(), due = q.filter(function(it){ return it.due <= I.qn; }).length;
+  $("ix-summary").textContent = (I.n ? I.n + " answered · " + pctOf(I.r, I.n) + "% correct. " : "No index cards answered yet. ")
+    + q.length + " missed card" + (q.length === 1 ? "" : "s") + " in your queue (" + due + " due now) · " + I.mastered + " mastered. Misses come back after a couple of cards, then after longer gaps, and leave once you have them right five times running.";
+}
+function ixRenderTable(){
+  var R = S.rules, rows = indexEntries(R).map(function(e){
+    return '<tr><th scope="row" class="rowh">' + esc(e.name) + '</th><td>' + esc(e.handLabel) + '</td><td>' + e.up + '</td><td class="num">' + sgn(e.thr) + '</td><td class="idx-rule">' + esc(e.text) + '</td><td>' + (e.grp === "fab4" ? "Fab 4" : "Illustrious 18") + '</td></tr>';
+  });
+  $("ix-table").innerHTML = '<thead><tr><th scope="col">Play</th><th scope="col">Hand</th><th scope="col">Dealer</th><th scope="col">Index</th><th scope="col">Rule</th><th scope="col">List</th></tr></thead><tbody>' + rows.join("") + '</tbody>';
+}
+function ixRenderStats(){
+  var h = "", I = S.idx;
+  indexEntries().forEach(function(e){ var d = I.stats[e.id] || { n: 0, r: 0 }; h += accRow(e.name, d.r, d.n); });
+  $("ix-stats").innerHTML = h;
+}
+function ixRenderSub(){
+  var R = S.rules, sent = rulesSentence(R);
+  $("index-sub").textContent = "Flashcards for the deviations that matter: you see the hand, the dealer's card and the whole-number true count, then make the play. " + sent.charAt(0).toUpperCase() + sent.slice(1) + ". "
+    + (R.ls ? "Surrender is offered, so 16 vs 9, 10 and A are surrenders at every count on a two-card hand — the stand indices (16 vs 10 at 0, 15 vs 10 at +4, 16 vs 9 at +5) are drilled on three-card hands, and the Fab 4 surrender indices appear instead. " : "With no surrender, the stand indices for 16 vs 10 (0), 15 vs 10 (+4) and 16 vs 9 (+5) apply and the Fab 4 are not in play. ")
+    + (R.h17 ? "H17 moves 11 vs A to −1, 10 vs A to +3 and 15 vs A to −1. " : "S17 numbers: 11 vs A at +1, 10 vs A at +4, 15 vs A at +1. ")
+    + "Double after split does not move any of these indices.";
+}
+function ixNext(){
+  var stage = $("index-stage");
+  var p = ixPick();
+  if(p.empty){ stage.innerHTML = '<div class="panel"><p class="note">' + esc(p.empty) + '</p></div>'; IX.q = null; ixSummary(); return; }
+  var R = S.rules, e = p.entry, tc = p.tc, ranks = ixRanks(e), cards = ranks.map(makeCard), up = makeCard(e.up);
+  var ctx = ixCtx(cards, R), correct = ixExpected(e, tc, cards, up, R);
+  IX.q = { entry: e, tc: tc, cards: cards, up: up, correct: correct, srs: !!p.srs }; IX.answered = false;
+  var btns;
+  if(e.kind === "ins"){
+    btns = '<button data-ins="1">Take insurance<kbd>Y</kbd></button><button data-ins="0">No insurance<kbd>N</kbd></button>';
+  } else {
+    btns = ["H","S","D","P"].concat(R.ls ? ["R"] : []).map(function(a){
+      var dis = (a === "D" && !ctx.canDouble) || (a === "P" && !ctx.canSplit) || (a === "R" && !ctx.canSurrender);
+      return '<button data-a="' + a + '" ' + (dis ? "disabled " : "") + 'aria-keyshortcuts="' + a.toLowerCase() + '">' + ACTION_NAME[a] + '<kbd>' + a + '</kbd></button>';
+    }).join("");
+  }
+  stage.innerHTML = '<div class="panel"><div class="progress-line"><span id="ix-prog">' + (IX.sessN ? IX.sessR + " of " + IX.sessN + " this session" : "Index card") + '</span><div class="bar"><i id="ix-bar" style="width:' + (IX.sessN ? 100 * IX.sessR / IX.sessN : 0) + '%"></i></div><span>' + (p.srs ? "Missed card — back for review" : e.grp === "fab4" ? "Fab 4" : "Illustrious 18") + '</span></div>'
+    + '<div class="felt"><div class="seat-label"><span>Dealer shows · True count</span><span class="total" id="ix-tc">TC ' + fmtTC(tc) + '</span></div>'
+    + '<div class="hand">' + cardHTML(up) + '</div><div class="vs">' + (e.kind === "ins" ? "INSURANCE?" : "VS") + '</div>'
+    + '<div class="seat-label"><span>Your hand' + (cards.length > 2 ? " (already hit)" : "") + '</span><span class="total">' + totalLabel(cards) + '</span></div>'
+    + '<div class="hand">' + handHTML(cards) + '</div></div>'
+    + '<div class="actions q-actions" id="ix-actions">' + btns + '</div>'
+    + '<p class="kbd-hint">Keys: ' + (e.kind === "ins" ? '<kbd>Y</kbd> take · <kbd>N</kbd> decline' : '<kbd>H</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>P</kbd>' + (R.ls ? ' <kbd>R</kbd>' : '')) + ' · <kbd>N</kbd> or <kbd>Enter</kbd> next card</p>'
+    + '<div class="feedback" id="ix-fb" role="status" aria-live="polite"></div>'
+    + '<div class="actions"><button id="ix-next" class="go hidden">Next card <kbd>N</kbd></button></div></div>';
+  stage.querySelectorAll("#ix-actions button").forEach(function(b){
+    b.addEventListener("click", function(){
+      var pick = b.hasAttribute("data-ins") ? (b.getAttribute("data-ins") === "1" ? "I" : "N") : b.getAttribute("data-a");
+      ixAnswer(pick);
+    });
+  });
+  ixSummary();
+}
+function ixAnswer(pick){
+  var q = IX.q; if(!q || IX.answered) return; IX.answered = true;
+  var e = q.entry, tc = q.tc, ok = pick === q.correct;
+  document.querySelectorAll("#ix-actions button").forEach(function(x){
+    x.disabled = true;
+    var xv = x.hasAttribute("data-ins") ? (x.getAttribute("data-ins") === "1" ? "I" : "N") : x.getAttribute("data-a");
+    if(xv === q.correct) x.classList.add("picked-right"); else if(xv === pick) x.classList.add("picked-wrong");
+  });
+  IX.sessN++; if(ok){ IX.sessR++; IX.streak++; } else IX.streak = 0;
+  var info = ixRecord(e, tc, ok);
+  var basic = e.kind === "ins" ? "N" : bsAnswer(q.cards, q.up, ixCtx(q.cards, S.rules), S.rules).play;
+  var side = tc >= e.thr ? ACTION_WORD[e.hi] : ACTION_WORD[e.lo];
+  var msg = e.text + ". At TC " + fmtTC(tc) + " (" + (tc >= e.thr ? "at or above" : "below") + " " + sgn(e.thr) + ") that means " + side.toLowerCase() + ". "
+    + (q.correct !== basic ? "Basic strategy alone says " + ACTION_WORD[basic].toLowerCase() + " — the count changes the play." : "That matches basic strategy at this count — the index only bites on the other side of " + sgn(e.thr) + ".");
+  if(q.cards.length > 2) msg += " You've already hit, so surrender is off the table — that's when the stand index applies.";
+  var note = "";
+  if(!ok) note = info.added ? " Added to your missed-card queue." : " Back to the start of its review schedule.";
+  else if(info.mastered) note = " Missed card mastered — it leaves your queue.";
+  else if(info.queued) note = " Review card: right " + info.box + " of 5 in a row.";
+  var fb = $("ix-fb");
+  fb.className = "feedback show " + (ok ? "right" : "wrong");
+  fb.innerHTML = '<div class="verdict">' + (ok ? "Correct — " : "It's ") + ACTION_WORD[q.correct] + '.</div>' + esc(msg) + '<span class="note">' + esc(note) + '</span>';
+  var nx = $("ix-next"); nx.classList.remove("hidden"); nx.addEventListener("click", ixNext); nx.focus({ preventScroll: true });
+  ixSummary(); ixRenderStats();
+  var pr = $("ix-prog"); if(pr) pr.textContent = IX.sessR + " of " + IX.sessN + " this session" + (IX.streak > 1 ? " · streak " + IX.streak : "");
+  var bar = $("ix-bar"); if(bar) bar.style.width = (100 * IX.sessR / IX.sessN) + "%";
+}
+function ixRulesChanged(){ ixRenderSub(); ixRenderTable(); ixRenderStats(); ixNext(); }
+function initIndex(){
+  $("ix-mode").addEventListener("change", ixNext);
+  ixRenderSub(); ixRenderTable(); ixRenderStats(); ixNext();
+}
+
+/* ================= SPEED RUN ================= */
+var SP = { running: false, tick: null, wait: null, t0: 0, end: 0, score: 0, hands: 0, right: 0, fast: 0, times: [], decStart: 0, waiting: false, target: 2000, dur: 60 };
+function spdClear(){
+  if(SP.tick){ clearInterval(SP.tick); SP.tick = null; }
+  if(SP.wait){ clearTimeout(SP.wait); SP.wait = null; }
+  SP.running = false; SP.waiting = false;
+}
+function spdAbort(msg){
+  var was = SP.running; spdClear();
+  var st = $("speed-stage");
+  if(was && st) st.innerHTML = msg ? '<div class="panel"><p class="note">' + esc(msg) + '</p></div>' : "";
+}
+function spdSub(){
+  var sent = rulesSentence(S.rules);
+  $("speed-sub").textContent = "Timed basic-strategy rounds against the clock, graded on your active rules — " + sent + ". Beat the run length, hold your accuracy, and bring your average decision time under your target.";
+}
+function spdHud(){
+  var left = Math.max(0, SP.end - Date.now()), el = $("sp-time");
+  if(!el) return;
+  el.textContent = (left / 1000).toFixed(1);
+  $("sp-score").textContent = Math.max(0, SP.score);
+  $("sp-hands").textContent = SP.hands;
+  $("sp-acc").textContent = SP.hands ? pctOf(SP.right, SP.hands) + "%" : "—";
+  var bar = $("sp-dbar");
+  if(bar){
+    var used = SP.waiting ? 0 : Math.min(100, 100 * (Date.now() - SP.decStart) / SP.target);
+    bar.style.width = used + "%"; bar.classList.toggle("over", !SP.waiting && (Date.now() - SP.decStart) > SP.target);
+  }
+  $("sp-tbar").style.width = (100 * left / (SP.end - SP.t0)) + "%";
+}
+function spdStep(){
+  if(!SP.running) return;
+  if(SP.wait){ clearTimeout(SP.wait); SP.wait = null; }
+  SP.waiting = false; SP.decStart = Date.now();
+  bsQuestion({ body: $("sp-body"), fb: $("sp-fb"), kind: "all", bet: 25, onAnswer: function(right){
+    if(!SP.running) return;
+    var dt = Date.now() - SP.decStart, inTime = dt <= SP.target;
+    SP.hands++; SP.times.push(dt);
+    if(right){ SP.right++; SP.score += 10; if(inTime){ SP.fast++; SP.score += 5; } } else SP.score -= 5;
+    SP.waiting = true; spdHud();
+    SP.wait = setTimeout(spdStep, right ? 350 : 1100);
+  }});
+}
+function spdStart(){
+  spdClear();
+  SP.dur = parseInt($("sp-dur").value, 10); SP.target = parseInt($("sp-target").value, 10);
+  S.spd.dur = SP.dur; S.spd.target = SP.target; saveState();
+  SP.score = 0; SP.hands = 0; SP.right = 0; SP.fast = 0; SP.times = [];
+  $("speed-stage").innerHTML = '<div class="panel"><div class="speed-hud" role="group" aria-label="Run status">'
+    + '<div><span class="k">Time left</span><b id="sp-time">' + SP.dur + '.0</b></div><div><span class="k">Score</span><b id="sp-score">0</b></div>'
+    + '<div><span class="k">Hands</span><b id="sp-hands">0</b></div><div><span class="k">Accuracy</span><b id="sp-acc">—</b></div></div>'
+    + '<div class="bar tbar"><i id="sp-tbar" style="width:100%"></i></div>'
+    + '<div class="dlabel"><span>This decision · target ' + fmtSecs(SP.target) + '</span></div><div class="bar dbar"><i id="sp-dbar"></i></div>'
+    + '<div id="sp-body"></div><div class="feedback" id="sp-fb" role="status" aria-live="polite"></div>'
+    + '<div class="actions"><button id="sp-cancel">Cancel run <kbd>Esc</kbd></button></div></div>';
+  $("sp-cancel").addEventListener("click", function(){ spdAbort("Run cancelled — it wasn't saved."); });
+  $("speed-stage").scrollIntoView({ behavior: smooth(), block: "nearest" });
+  SP.running = true; SP.t0 = Date.now(); SP.end = SP.t0 + SP.dur * 1000;
+  SP.tick = setInterval(function(){ if(Date.now() >= SP.end){ spdFinish(); } else spdHud(); }, 100);
+  spdStep();
+}
+function spdFinish(){
+  if(!SP.running) return;
+  spdClear();
+  var hands = SP.hands, right = SP.right, acc = hands ? Math.round(100 * right / hands) : 0;
+  var avg = hands ? Math.round(SP.times.reduce(function(a, b){ return a + b; }, 0) / hands) : null;
+  var score = Math.max(0, SP.score), key = String(SP.dur), B = S.spd.best[key] || (S.spd.best[key] = { score: 0, acc: null, avg: null, hands: 0 });
+  var flags = [];
+  if(score > B.score){ B.score = score; B.hands = hands; flags.push("best score"); }
+  if(hands >= 10 && (B.acc === null || acc > B.acc)){ B.acc = acc; flags.push("best accuracy"); }
+  if(hands >= 10 && acc >= 90 && (B.avg === null || avg < B.avg)){ B.avg = avg; flags.push("fastest average decision"); }
+  S.spd.runs++;
+  S.spd.hist.unshift({ at: Date.now(), dur: SP.dur, score: score, acc: acc, hands: hands, avg: avg, target: SP.target, fast: SP.fast });
+  if(S.spd.hist.length > 10) S.spd.hist.length = 10;
+  saveState(); refreshStrip();
+  var met = avg !== null && avg <= SP.target;
+  $("speed-stage").innerHTML = '<div class="panel" id="sp-result"><h3>Time! ' + SP.dur + '-second run</h3>'
+    + '<div class="speed-hud"><div><span class="k">Score</span><b id="sp-r-score">' + score + '</b></div><div><span class="k">Hands</span><b id="sp-r-hands">' + hands + '</b></div>'
+    + '<div><span class="k">Accuracy</span><b id="sp-r-acc">' + (hands ? acc + "%" : "—") + '</b></div><div><span class="k">Avg decision</span><b id="sp-r-avg">' + (avg === null ? "—" : fmtSecs(avg)) + '</b></div></div>'
+    + '<div class="feedback show ' + (met && acc >= 90 ? "right" : "wrong") + '" id="sp-r-fb"><div class="verdict">' + (hands ? (met ? "Target met" : "Target missed") + ' — average ' + fmtSecs(avg) + ' against your ' + fmtSecs(SP.target) + ' target.' : "No hands finished — start the run and answer fast.") + '</div>'
+    + (hands ? SP.fast + ' of ' + hands + ' decisions landed inside the target (' + pctOf(SP.fast, hands) + '%). ' + right + ' of ' + hands + ' were right' + (acc < 90 ? ' — accuracy first: below 90% the speed does not count toward your fastest-average record.' : '.') : '')
+    + (flags.length ? ' <b>New personal best: ' + flags.join(", ") + '.</b>' : '') + '</div>'
+    + '<div class="actions"><button class="go" id="sp-again">Run again<kbd>Enter</kbd></button></div></div>';
+  $("sp-again").addEventListener("click", spdStart); $("sp-again").focus({ preventScroll: true });
+  spdRenderBest();
+}
+function spdRenderBest(){
+  var B = S.spd.best, h = "", any = false;
+  [30, 60, 120].forEach(function(d){
+    var b = B[String(d)]; if(!b) return; any = true;
+    h += '<div class="rec-row"><span class="nm">' + (d === 120 ? "2 minutes" : d + " seconds") + '</span><span>Best score <b>' + b.score + '</b></span><span>Best accuracy <b>' + (b.acc === null ? "—" : b.acc + "%") + '</b></span><span>Fastest avg <b>' + (b.avg === null ? "—" : fmtSecs(b.avg)) + '</b></span></div>';
+  });
+  if(!any) h = '<p class="note">No saved runs yet. Start one above — your best score, accuracy and average decision time are kept on this device.</p>';
+  else {
+    var H = S.spd.hist.slice(0, 5);
+    h += '<p class="note" id="sp-recent">Last ' + H.length + ' run' + (H.length === 1 ? "" : "s") + ': ' + H.map(function(r){ return r.score + " pts (" + r.acc + "%, " + (r.avg === null ? "—" : fmtSecs(r.avg)) + ")"; }).join(" · ") + '. Fastest-average records need at least 10 hands at 90% accuracy or better.</p>';
+  }
+  $("speed-best").innerHTML = h;
+}
+function spdRulesChanged(){ spdAbort(SP.running ? "Run cancelled because the rules changed — start a new run." : ""); spdSub(); }
+function initSpeed(){
+  $("sp-dur").value = String(S.spd.dur); $("sp-target").value = String(S.spd.target);
+  if($("sp-dur").value !== String(S.spd.dur)) $("sp-dur").value = "60";
+  if($("sp-target").value !== String(S.spd.target)) $("sp-target").value = "2000";
+  $("sp-start").addEventListener("click", spdStart);
+  spdSub(); spdRenderBest();
+}
+
 /* ================= house-edge model (8 decks, 3:2 unless told otherwise) ================= */
 function houseEdge(o){
   var e = 0.43;                 /* 8 decks, S17, DAS, no surrender, 3:2, no resplit aces */
@@ -2128,6 +2759,23 @@ document.addEventListener("keydown", function(e){
     if(!handled && (lk === "+" || lk === "=")) handled = clickFirst(sc + "#rc-plus") || clickFirst(sc + "#tc-plus");
     if(!handled && (lk === "-" || lk === "−")) handled = clickFirst(sc + "#rc-minus") || clickFirst(sc + "#tc-minus");
   }
+  else if(view === "index"){
+    if(lk.length === 1 && "hsdpr".indexOf(lk) >= 0) handled = clickFirst('#ix-actions [data-a="' + lk.toUpperCase() + '"]');
+    if(!handled && (lk === "y" || lk === "n")) handled = clickFirst('#ix-actions [data-ins="' + (lk === "y" ? "1" : "0") + '"]');
+    if(!handled && (lk === "n" || (k === "Enter" && !onButton))) handled = clickFirst("#ix-next");
+  } else if(view === "speed"){
+    if(SP.running){
+      if(lk.length === 1 && "hsdpr".indexOf(lk) >= 0) handled = clickFirst('#sp-body .q-actions [data-a="' + lk.toUpperCase() + '"]');
+      if(!handled && (lk === "n" || (k === "Enter" && !onButton) || (k === " " && !onButton))){ if(SP.waiting){ spdStep(); handled = true; } }
+      if(!handled && k === "Escape") handled = clickFirst("#sp-cancel");
+    } else if(k === "Enter" && !onButton) handled = clickFirst("#sp-again") || clickFirst("#sp-start");
+  } else if(view === "count"){
+    if(k === "+" || k === "=" || k === "ArrowUp") handled = clickFirst("#cd-plus");
+    else if(k === "-" || k === "−" || k === "ArrowDown") handled = clickFirst("#cd-minus");
+    else if(k === "ArrowRight" || (k === " " && !onButton)) handled = clickFirst("#cd-next");
+    else if(k === "Enter" && !onButton) handled = clickFirst("#cd-submit") || clickFirst("#cd-nextq") || clickFirst("#cd-again") || clickFirst("#cd-next") || clickFirst("#cd-start");
+    else if(k === "Escape" && $("count-stage").innerHTML){ cdAbort(); cdStageEmpty(); handled = true; }
+  }
   if(handled) e.preventDefault();
 });
 
@@ -2155,6 +2803,9 @@ refreshStrip();
 buildCharts();
 initDrill();
 initSim();
+initCount();
+initIndex();
+initSpeed();
 syncScorerFromRules();
 runLab();
 runScorer();

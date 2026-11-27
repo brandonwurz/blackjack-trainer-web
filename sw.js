@@ -1,5 +1,5 @@
 /* Blackjack Trainer service worker: offline-first for the app shell. Bump CACHE when index.html changes. */
-var CACHE = "bjt-v2-3";
+var CACHE = "bjt-v3-1";
 var ASSETS = ["./", "index.html", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", function(e){

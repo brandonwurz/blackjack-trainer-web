@@ -45,8 +45,12 @@ with sync_playwright() as p:
         pg.set_viewport_size(vp)
         # axe on key views (AA + best practice)
         axe=Axe()
-        for view in ["path","drill","review","charts","scorer","lab","sim"]:
+        for view in ["path","drill","speed","count","index","review","charts","scorer","lab","sim"]:
             pg.click("#tab-"+view); pg.wait_for_timeout(120)
+            if view == "count":
+                pg.click("#cd-modes button[data-cmode=conv]"); pg.click("#cd-start"); pg.wait_for_timeout(80)
+            if view == "speed":
+                pg.click("#sp-start"); pg.wait_for_timeout(150)
             r=axe.run(pg, options={"runOnly":{"type":"tag","values":["wcag2a","wcag2aa","wcag21aa"]}})
             v=r.response["violations"]
             print(f"  axe {tag}/{view}: {len(v)} violations", [(x['id'],len(x['nodes'])) for x in v])
@@ -61,8 +65,10 @@ with sync_playwright() as p:
     pg.on("pageerror", lambda e: errs.append(("dark",str(e))))
     pg.goto(BASE+"index.html",wait_until="networkidle")
     axe=Axe()
-    for view in ["path","charts","scorer"]:
+    for view in ["path","charts","scorer","speed","count","index"]:
         pg.click("#tab-"+view); pg.wait_for_timeout(100)
+        if view == "count":
+            pg.click("#cd-modes button[data-cmode=conv]"); pg.click("#cd-start"); pg.wait_for_timeout(80)
         v=axe.run(pg, options={"runOnly":{"type":"tag","values":["wcag2a","wcag2aa"]}}).response["violations"]
         print(f"  axe dark/{view}:", [(x['id'],len(x['nodes'])) for x in v]); check(f"dark: axe {view} clean", len(v)==0)
     pg.screenshot(path=OUT+"v2-desktop-dark.png")
@@ -78,7 +84,7 @@ with sync_playwright() as p:
     pg.evaluate("S.passed['0']=true;S.unlocked=1;saveState()")
     ctx.set_offline(True)
     pg.reload(wait_until="domcontentloaded"); pg.wait_for_timeout(400)
-    check("offline reload works (cached shell)", "Blackjack" in pg.title() and pg.locator("#tabs [role=tab]").count()==7)
+    check("offline reload works (cached shell)", "Blackjack" in pg.title() and pg.locator("#tabs [role=tab]").count()==10)
     check("offline: progress still there", pg.evaluate("S.passed['0']")==True)
     pg.click("#tab-charts"); check("offline: charts render", pg.locator("#chart-hard tr").count()>5)
     pg.screenshot(path=OUT+"v2-desktop-offline.png")

@@ -39,7 +39,7 @@ def run(p, vp, tag):
     check(T("no deck chooser"), pg.locator("select[id*=deck], input[id*=deck]").count()==0)
     check(T("copy says eight decks / 8 decks"), re.search(r"8[- ]deck|eight[- ]deck", body, re.I) is not None)
     check(T("levels passed X / 7"), "0 / 7" in pg.inner_text("#st-level") or "0 / 7" in body, pg.inner_text("#st-level"))
-    check(T("7 tabs"), pg.locator("#tabs [role=tab]").count()==7, str(pg.locator("#tabs [role=tab]").count()))
+    check(T("10 tabs"), pg.locator("#tabs [role=tab]").count()==10, str(pg.locator("#tabs [role=tab]").count()))
     pg.screenshot(path=OUT+f"v2-{tag}-path.png")
     # ---- Level 0 through UI
     pg.click("#path-grid button[data-level='0']"); pg.click("#l0-start")
