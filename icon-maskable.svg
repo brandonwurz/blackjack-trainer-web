@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs><radialGradient id="g" cx="50%" cy="20%" r="90%"><stop offset="0" stop-color="#17603a"/><stop offset="1" stop-color="#082a1a"/></radialGradient></defs>
+  <rect width="512" height="512" fill="url(#g)"/>
+  <g transform="translate(256 256) scale(.74) translate(-256 -256)">
+  <g transform="translate(256 235) scale(.82) translate(-256 -235)"><path fill="#fdfdfa" d="M256 92c0 0-132 104-132 200 0 48 36 80 76 80 20 0 36-8 46-20-2 30-14 52-34 70h88c-20-18-32-40-34-70 10 12 26 20 46 20 40 0 76-32 76-80 0-96-132-200-132-200z"/></g>
+  <text x="256" y="462" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="800" font-size="64" fill="#e0aa3e">21</text></g>
+</svg>
