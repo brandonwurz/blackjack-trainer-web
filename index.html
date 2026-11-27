@@ -4,12 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="description" content="Blackjack basic-strategy and card-counting trainer: 8 decks, rules toggles, spaced repetition, table simulator. Works offline." />
+    <meta name="description" content="Blackjack basic-strategy and card-counting trainer: 1, 2, 4, 6 or 8 decks, rules toggles, spaced repetition, table simulator. Works offline." />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BJ Trainer" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#0d3b26" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#edf1ec" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d3b26" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -439,6 +440,145 @@ h4.sub-h:first-child { margin-top: 0; }
 @media (max-width: 520px) { .flash .pcard { transform: scale(1.15); margin: 0 8px; } .speed-hud b { font-size: 1.3rem; } .convq b { font-size: 2.1rem; } }
 button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
 
+
+/* ================= v4: safe areas, feedback, tabs, charts, simulator ================= */
+html { background: var(--bg); }
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.wrap {
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-bottom: calc(56px + env(safe-area-inset-bottom));
+}
+.tabs-wrap { top: env(safe-area-inset-top); }
+
+/* H2: keep picked + correct answers fully opaque; fade only the others */
+.actions button:disabled { opacity: .5; }
+.actions button:disabled.picked-right,
+.actions button:disabled.picked-wrong { opacity: 1; }
+.actions button.picked-right::before { content: "✓ "; }
+.actions button.picked-wrong::before { content: "✗ "; }
+
+/* M1: wrap tabs on desktop instead of clipping them */
+@media (min-width: 860px) {
+  .tabs-wrap::before, .tabs-wrap::after { display: none; }
+  nav.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    overflow: visible;
+    scroll-snap-type: none;
+    gap: 6px;
+    padding-bottom: 4px;
+  }
+}
+
+/* M2: result-bar fill follows the score; red when you fail */
+.bar i.fail { background: var(--red); }
+.feedback .result-actions { margin-top: 10px; }
+
+/* M3: drop the repeating Hand column on phone so Rule is readable */
+@media (max-width: 640px) {
+  #ix-table th:nth-child(2),
+  #ix-table td:nth-child(2) { display: none; }
+  #ix-table .idx-rule,
+  #ix-table td:nth-child(5) { min-width: 9.5em; }
+}
+
+/* M4: keep Hit/Stand on screen during a live hand on phone */
+@media (max-width: 700px) {
+  #view-sim.live-hand #sim-betbar.hidden-during-hand { display: none; }
+  #view-sim.live-hand #sim-actions,
+  #view-sim.live-hand #sim-ins-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 25;
+    margin: 0 -4px;
+    padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+    background: var(--bg);
+    box-shadow: 0 -8px 16px var(--bg);
+  }
+}
+
+/* L1: disabled Deal should still look like a button, not a broken control */
+#sim-deal:disabled { opacity: .72; }
+
+/* L2: lock badges large enough and fully opaque */
+nav.tabs button .lock { font-size: 12px; opacity: 1; }
+
+/* L3: 12px floor on small labels and chart cells */
+.felt .seat-label { font-size: 12px; }
+.stat-grid dt, .idx-table th, table.chart th, table.chart td { font-size: max(12px, 0.82em); }
+.stat-grid dd small { font-size: .85em; }
+kbd { font-size: 12px; }
+
+/* L4: session panel on phone */
+.nowrap { white-space: nowrap; }
+@media (max-width: 420px) {
+  #view-sim .stat-grid { grid-template-columns: 1fr; }
+}
+
+/* L6 */
+#lab-warn { color: var(--red); }
+
+/* L7: Rules as an overlay sheet on phone so it doesn't push the tabs off-screen */
+@media (max-width: 700px) {
+  #rules-panel {
+    position: fixed;
+    left: max(10px, env(safe-area-inset-left));
+    right: max(10px, env(safe-area-inset-right));
+    top: max(10px, env(safe-area-inset-top));
+    z-index: 80;
+    max-height: calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow: auto;
+    box-shadow: 0 16px 48px rgba(0,0,0,.28);
+  }
+}
+
+/* L10: tighter chart cells on very narrow phones */
+@media (max-width: 340px) {
+  table.chart { min-width: 300px; font-size: 12px; }
+  table.chart th, table.chart td { padding: 7px 0; min-width: 26px; }
+  .chart-scroll { margin-left: -4px; margin-right: -4px; }
+}
+
+
+/* PM QA: scroll offset under the sticky tab bar, field errors, storage warn, tabs wrap, kbd, session wrap */
+#stage, #review-stage, #count-stage, #speed-stage, #index-stage, #drill-stage, .level-card, #path-grid .panel, #path-grid [data-level] {
+  scroll-margin-top: calc(64px + env(safe-area-inset-top, 0px));
+}
+#storage-warn { color: var(--red); margin: 8px 0 0; font-weight: 700; }
+.field-err { color: var(--red); font-size: .85rem; margin: 4px 0 0; }
+input[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--red); }
+
+@media (hover: none), (pointer: coarse) {
+  kbd, .kbd-hint { display: none !important; }
+}
+html.touch kbd, html.touch .kbd-hint { display: none !important; }
+
+@media (min-width: 860px) {
+  .tabs-wrap { overflow: visible; height: auto; }
+  nav.tabs {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    scroll-snap-type: none !important;
+  }
+}
+
+#view-sim .stat-grid { min-width: 0; }
+#view-sim .stat-grid > div { min-width: 0; }
+#view-sim .stat-grid dd { overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  #view-sim .stat-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 420px) {
+  #view-sim .stat-grid { grid-template-columns: 1fr; }
+}
+
     </style>
   </head>
   <body>
@@ -453,11 +593,20 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
         <button class="install-btn" id="install-btn" hidden>Install app</button>
         <button class="rules-btn" id="rules-btn" aria-expanded="false" aria-controls="rules-panel" title="Change table rules">Rules: <span id="rules-label">S17 · DAS · LS</span> ⚙</button>
       </div>
+      <p class="note" id="storage-warn" hidden role="status">Progress can't be saved in this browser mode.</p>
 
       <div class="panel" id="rules-panel" hidden>
         <h3>Table rules</h3>
-        <p class="fixed">Always: 8 decks · blackjack pays 3:2 · dealer peeks for blackjack · one card on split aces. Every chart, drill, the simulator coach and the index plays follow the three rules below.</p>
+        <p class="fixed" id="rules-fixed">Always: blackjack pays 3:2 · dealer peeks for blackjack · one card on split aces. Deck count, soft 17, double after split and late surrender drive every chart, drill, the simulator coach and the index plays.</p>
         <div class="form-grid">
+          <div class="field"><label for="rule-decks">Number of decks</label>
+            <select id="rule-decks">
+              <option value="1">1 deck</option>
+              <option value="2">2 decks</option>
+              <option value="4">4 decks</option>
+              <option value="6">6 decks</option>
+              <option value="8" selected>8 decks</option>
+            </select></div>
           <div class="field"><label for="rule-soft17">Dealer on soft 17</label>
             <select id="rule-soft17"><option value="S" selected>Stands (S17)</option><option value="H">Hits (H17)</option></select></div>
           <div class="field"><label for="rule-das">Double after split</label>
@@ -466,7 +615,7 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
             <select id="rule-ls"><option value="1" selected>Offered</option><option value="0">Not offered</option></select></div>
         </div>
         <div class="btn-row">
-          <button id="rules-default">Back to default (S17 · DAS · LS)</button>
+          <button id="rules-default">Back to default (8 decks · S17 · DAS · LS)</button>
           <button id="unlock-all">Skip the path (unlock everything)</button>
           <button id="reset-all" class="danger">Reset all saved progress</button>
         </div>
@@ -548,7 +697,7 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
       <!-- ============ COUNT DRILLS ============ -->
       <section class="view" id="view-count" role="tabpanel" aria-labelledby="tab-count">
         <h2 class="view-title">Count drills — Hi-Lo</h2>
-        <p class="view-sub">Twos through sixes are +1, sevens through nines are 0, tens and aces are −1. Three drills: keep a running count of a dealt sequence at your chosen speed, count down a whole deck against the clock, and convert a running count to a true count out of eight decks.</p>
+        <p class="view-sub">Twos through sixes are +1, sevens through nines are 0, tens and aces are −1. Three drills: keep a running count of a dealt sequence at your chosen speed, count down a whole deck against the clock, and convert a running count to a true count for the number of decks in Rules.</p>
         <div class="panel">
           <div class="seg" role="group" aria-label="Drill type" id="cd-modes">
             <button type="button" data-cmode="run" aria-pressed="true">Running count</button>
@@ -577,7 +726,8 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
         <div id="index-stage"></div>
         <div class="panel"><h3>Your index list</h3>
           <p class="note">Exactly the numbers this trainer grades against, for the rules you have set. At or above the index you make the deviation; below it you play the other way.</p>
-          <div class="chart-scroll" tabindex="0" role="region" aria-label="Index list, scrolls sideways on small screens"><table class="idx-table" id="ix-table"></table></div></div>
+          <p class="scroll-hint" id="ix-hint" hidden>Swipe the table sideways to read the Rule column →</p>
+            <div class="chart-scroll" tabindex="0" role="region" aria-label="Index list, scrolls sideways on small screens"><table class="idx-table" id="ix-table"></table></div></div>
         <div class="panel"><h3>Accuracy by index</h3><div id="ix-stats"></div></div>
       </section>
 
@@ -631,14 +781,14 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
                 </div>
                 <div class="actions">
                   <button id="sim-clear-bet">Clear bet</button>
-                  <button id="sim-deal" class="go" disabled>Deal — bet $0 <kbd>Enter</kbd></button>
+                  <button id="sim-deal" class="go" disabled title="Pick a chip to bet first">Deal — bet $0 <kbd>Enter</kbd></button>
                   <button id="sim-rebet" class="hidden">Rebet &amp; deal <kbd>R</kbd></button>
                 </div>
                 <p class="kbd-hint">Keys: <kbd>1</kbd>–<kbd>5</kbd> add chips · <kbd>Enter</kbd> deal · <kbd>R</kbd> rebet</p>
               </div>
               <div class="actions hidden" id="sim-actions">
                 <button data-act="H" aria-keyshortcuts="h">Hit<kbd>H</kbd></button>
-                <button data-act="S" class="primary" aria-keyshortcuts="s">Stand<kbd>S</kbd></button>
+                <button data-act="S" aria-keyshortcuts="s">Stand<kbd>S</kbd></button>
                 <button data-act="D" aria-keyshortcuts="d">Double<kbd>D</kbd></button>
                 <button data-act="P" aria-keyshortcuts="p">Split<kbd>P</kbd></button>
                 <button data-act="R" id="sim-sur-btn" aria-keyshortcuts="r">Surrender<kbd>R</kbd></button>
@@ -655,7 +805,7 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
                 <dl class="stat-grid">
                   <div><dt>Bankroll</dt><dd id="sim-bank">$1,000</dd></div>
                   <div><dt>Hands played</dt><dd id="sim-hands">0</dd></div>
-                  <div><dt>Won / Lost / Push</dt><dd id="sim-wlp">0 / 0 / 0</dd></div>
+                  <div><dt>W / L / P</dt><dd id="sim-wlp" class="nowrap">0 / 0 / 0</dd></div>
                   <div><dt>Net</dt><dd id="sim-net">$0</dd></div>
                   <div><dt>Decisions graded</dt><dd id="sim-graded">0</dd></div>
                   <div><dt>Decision accuracy</dt><dd id="sim-grade-acc">—</dd></div>
@@ -666,7 +816,7 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
                 </div>
                 <dl class="stat-grid" id="sim-count-box">
                   <div><dt>Running count</dt><dd id="sim-rc">0</dd></div>
-                  <div><dt>True count (rounded)</dt><dd id="sim-tc">0</dd></div>
+                  <div><dt>True count</dt><dd id="sim-tc" class="nowrap">0</dd></div>
                   <div><dt>Decks left</dt><dd id="sim-decks">8.0</dd></div>
                 </dl>
                 <div class="actions">
@@ -692,23 +842,24 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
         <div id="lab-main" class="hidden">
           <div class="panel">
             <div class="form-grid">
-              <div class="field"><label for="lab-bank">Bankroll ($)</label><input id="lab-bank" type="number" min="100" step="100" value="10000" /></div>
-              <div class="field"><label for="lab-unit">Base unit ($)</label><input id="lab-unit" type="number" min="5" step="5" value="25" /></div>
+              <div class="field"><label for="lab-bank">Bankroll ($)</label><input id="lab-bank" type="number" inputmode="decimal" min="100" step="100" value="10000" aria-describedby="lab-bank-err lab-warn" /><p class="field-err" id="lab-bank-err" hidden></p></div>
+              <div class="field"><label for="lab-unit">Base unit ($)</label><input id="lab-unit" type="number" inputmode="decimal" min="5" step="5" value="25" aria-describedby="lab-unit-err lab-warn" /><p class="field-err" id="lab-unit-err" hidden></p></div>
               <div class="field"><label for="lab-spread">Bet spread (top bet)</label>
                 <select id="lab-spread">
                   <option value="8">1–8 (quiet)</option>
                   <option value="12" selected>1–12 (standard)</option>
                   <option value="16">1–16 (aggressive)</option>
                 </select></div>
-              <div class="field"><label for="lab-hph">Hands per hour</label><input id="lab-hph" type="number" min="20" step="5" value="80" /></div>
-              <div class="field"><label for="lab-hours">Session length (hours)</label><input id="lab-hours" type="number" min="1" step="1" value="4" /></div>
+              <div class="field"><label for="lab-hph">Hands per hour</label><input id="lab-hph" type="number" inputmode="decimal" min="20" step="5" value="80" aria-describedby="lab-hph-err lab-warn" /><p class="field-err" id="lab-hph-err" hidden></p></div>
+              <div class="field"><label for="lab-hours">Session length (hours)</label><input id="lab-hours" type="number" inputmode="decimal" min="1" step="1" value="4" aria-describedby="lab-hours-err lab-warn" /><p class="field-err" id="lab-hours-err" hidden></p></div>
             </div>
             <div class="out-grid" id="lab-outs"></div>
+            <p class="note warn" id="lab-warn" hidden></p>
             <p class="note" id="lab-note"></p>
           </div>
           <div class="panel">
             <h3>Your ramp</h3>
-            <p class="note">Bets by true count for the spread above. True-count frequencies and the ~0.5% edge swing per true-count point are the standard published approximations for an eight-deck game cut at 75%.</p>
+            <p class="note">Bets by true count for the spread above. True-count frequencies come from a Hi-Lo shoe simulation at 75% penetration for the selected number of decks; the ~0.5% edge swing per true-count point is a published approximation.</p>
             <div class="chart-scroll"><table class="chart" id="lab-ramp-table"></table></div>
           </div>
         </div>
@@ -717,7 +868,7 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
       <!-- ============ GAME SCORER ============ -->
       <section class="view" id="view-scorer" role="tabpanel" aria-labelledby="tab-scorer">
         <h2 class="view-title">Game-selection scorer</h2>
-        <p class="view-sub">The cheapest edge in blackjack is choosing the right table. Feed in the rules posted on the felt (this trainer always assumes eight decks) and get the house edge, a grade, and what the game is worth to a counter.</p>
+        <p class="view-sub">The cheapest edge in blackjack is choosing the right table. Feed in the rules posted on the felt — including the number of decks — and get the house edge, a grade, and what the game is worth to a counter.</p>
         <div id="scorer-locked" class="panel hidden">
           <h3>Locked — pass Level 5 first</h3>
           <p class="note">The scorer unlocks after Level 5. Game selection is a counter's skill — it lands once you can price a true count.</p>
@@ -725,8 +876,16 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
         </div>
         <div id="scorer-main" class="hidden">
           <div class="panel">
-            <p class="note" style="margin-top:0;">Decks: <b>8</b> (fixed). The three rules below start from your Rules setting.</p>
+            <p class="note" style="margin-top:0;">These start from your Rules setting — change them here to score a different table without leaving this tab.</p>
             <div class="form-grid">
+              <div class="field"><label for="sc-decks">Number of decks</label>
+                <select id="sc-decks">
+                  <option value="1">1 deck</option>
+                  <option value="2">2 decks</option>
+                  <option value="4">4 decks</option>
+                  <option value="6">6 decks</option>
+                  <option value="8" selected>8 decks</option>
+                </select></div>
               <div class="field"><label for="sc-h17">Dealer on soft 17</label>
                 <select id="sc-h17"><option value="S" selected>Stands (S17)</option><option value="H">Hits (H17)</option></select></div>
               <div class="field"><label for="sc-das">Double after split</label>
@@ -782,7 +941,7 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
       </section>
 
       <!-- ============ PHONE ============ -->
-      <div class="panel" style="margin-top:26px;">
+      <div class="panel" id="install-panel" style="margin-top:26px;">
         <h3 style="margin-top:0;">Put it on your phone's home screen</h3>
         <div class="phone-steps">
           <div class="step"><span class="n">IPHONE · SAFARI</span><h3>Add to Home Screen</h3><p>Open this page in Safari, tap the <b>Share</b> button, then <b>Add to Home Screen</b>. It gets its own icon, opens full-screen and works offline.</p></div>
@@ -797,17 +956,23 @@ button.go kbd, button.go-solid kbd, .actions button.go kbd { opacity: 1; }
 <script>
 "use strict";
 /* ================= constants ================= */
-var DECKS = 8, SHOE_SIZE = DECKS * 52, CUT_CARDS = Math.round(SHOE_SIZE * 0.75);
+var ALLOWED_DECKS = [1, 2, 4, 6, 8];
 var SUITS = ["♠","♥","♦","♣"];
 var RANKS = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
 var TENS = ["10","J","Q","K"];
-var DEFAULT_RULES = { h17: false, das: true, ls: true };
+var DEFAULT_RULES = { decks: 8, h17: false, das: true, ls: true };
+function clampDecks(n){ n = parseInt(n, 10); return ALLOWED_DECKS.indexOf(n) >= 0 ? n : 8; }
+function nDecks(r){ return clampDecks((r || (typeof S !== "undefined" && S.rules) || DEFAULT_RULES).decks); }
+function shoeSize(r){ return nDecks(r) * 52; }
+function cutCards(r){ return Math.round(shoeSize(r) * 0.75); }
+function deckFamily(r){ var d = nDecks(r); return d <= 1 ? 1 : (d === 2 ? 2 : 8); }
+function decksPhrase(r){ var d = nDecks(r); return d === 1 ? "1 deck" : d + " decks"; }
 var STORE_KEY = "bjt:v2";
 
 /* ================= saved state ================= */
 function freshState(){
   return {
-    rules: { h17: DEFAULT_RULES.h17, das: DEFAULT_RULES.das, ls: DEFAULT_RULES.ls },
+    rules: { decks: DEFAULT_RULES.decks, h17: DEFAULT_RULES.h17, das: DEFAULT_RULES.das, ls: DEFAULT_RULES.ls },
     unlocked: 0, passed: {}, unlockAll: false,
     drillQ: 0, drillRight: 0, mistakeCost: 0,
     fam: {}, srs: [], qn: 0, mastered: 0,
@@ -815,7 +980,7 @@ function freshState(){
     cnt: { run: { n:0, r:0, bySpeed:{}, fastest:null }, deck: { n:0, r:0, best:{}, last:null, hist:[] }, conv: { n:0, r:0, byMode:{} } },
     idx: { n:0, r:0, qn:0, mastered:0, stats:{}, srs:[] },
     spd: { runs:0, dur:60, target:2000, best:{}, hist:[] },
-    curLevel: null
+    curLevel: null, view: "path"
   };
 }
 var S = freshState();
@@ -829,28 +994,43 @@ function loadState(){
     if(o.passed && typeof o.passed === "object") S.passed = o.passed;
     if(o.fam && typeof o.fam === "object") S.fam = o.fam;
     if(Array.isArray(o.srs)) S.srs = o.srs;
-    if(o.rules){ S.rules = { h17: !!o.rules.h17, das: o.rules.das !== false, ls: o.rules.ls !== false }; }
+    if(o.rules){ S.rules = { decks: clampDecks(o.rules.decks), h17: !!o.rules.h17, das: o.rules.das !== false, ls: o.rules.ls !== false }; }
     if(o.cnt && typeof o.cnt === "object"){
       ["run","deck","conv"].forEach(function(k){ if(o.cnt[k] && typeof o.cnt[k] === "object") for(var kk in o.cnt[k]) S.cnt[k][kk] = o.cnt[k][kk]; });
     }
     if(o.idx && typeof o.idx === "object"){ for(var ik in o.idx) S.idx[ik] = o.idx[ik]; if(!Array.isArray(S.idx.srs)) S.idx.srs = []; }
     if(o.spd && typeof o.spd === "object"){ for(var sk in o.spd) S.spd[sk] = o.spd[sk]; if(!Array.isArray(S.spd.hist)) S.spd.hist = []; if(!S.spd.best || typeof S.spd.best !== "object") S.spd.best = {}; }
     if(o.sim){ S.sim = { bank: +o.sim.bank, rebuys: +o.sim.rebuys || 0, stats: o.sim.stats || f.sim.stats }; if(!isFinite(S.sim.bank)) S.sim.bank = 1000; }
+    var views = ["path","drill","speed","count","index","review","sim","lab","scorer","charts"];
+    if(o.view && views.indexOf(o.view) >= 0) S.view = o.view;
   } catch(e){ storageOK = false; }
+  probeStorage();
+}
+function probeStorage(){
+  try {
+    var k = STORE_KEY + ":probe";
+    window.localStorage.setItem(k, "1");
+    window.localStorage.removeItem(k);
+  } catch(e){ storageOK = false; }
+}
+function syncStorageWarn(){
+  var w = $("storage-warn"), rs = $("rules-saved");
+  if(w) w.hidden = !!storageOK;
+  if(rs && !storageOK) rs.textContent = "Progress can't be saved in this browser mode.";
 }
 function saveState(){
   try {
     var o = { rules: S.rules, unlocked: S.unlocked, passed: S.passed, unlockAll: S.unlockAll,
       drillQ: S.drillQ, drillRight: S.drillRight, mistakeCost: S.mistakeCost,
-      fam: S.fam, srs: S.srs, qn: S.qn, mastered: S.mastered, sim: S.sim, cnt: S.cnt, idx: S.idx, spd: S.spd };
+      fam: S.fam, srs: S.srs, qn: S.qn, mastered: S.mastered, sim: S.sim, cnt: S.cnt, idx: S.idx, spd: S.spd, view: S.view };
     window.localStorage.setItem(STORE_KEY, JSON.stringify(o));
-  } catch(e){ storageOK = false; }
+  } catch(e){ storageOK = false; if(typeof syncStorageWarn === "function") syncStorageWarn(); }
 }
-function rulesLabel(r){ r = r || S.rules; return (r.h17 ? "H17" : "S17") + " · " + (r.das ? "DAS" : "no DAS") + " · " + (r.ls ? "LS" : "no surrender"); }
-function isDefaultRules(r){ return r.h17 === DEFAULT_RULES.h17 && r.das === DEFAULT_RULES.das && r.ls === DEFAULT_RULES.ls; }
+function rulesLabel(r){ r = r || S.rules; return nDecks(r) + "D · " + (r.h17 ? "H17" : "S17") + " · " + (r.das ? "DAS" : "no DAS") + " · " + (r.ls ? "LS" : "no surrender"); }
+function isDefaultRules(r){ return nDecks(r) === DEFAULT_RULES.decks && r.h17 === DEFAULT_RULES.h17 && r.das === DEFAULT_RULES.das && r.ls === DEFAULT_RULES.ls; }
 function sim17Word(r){ return r.h17 ? "dealer hits soft 17" : "dealer stands on all 17s"; }
 function rulesSentence(r){
-  return "8 decks, " + sim17Word(r) + ", double after split " + (r.das ? "allowed" : "not allowed") + ", late surrender " + (r.ls ? "offered" : "not offered") + ", blackjack pays 3:2";
+  return decksPhrase(r) + ", " + sim17Word(r) + ", double after split " + (r.das ? "allowed" : "not allowed") + ", late surrender " + (r.ls ? "offered" : "not offered") + ", blackjack pays 3:2";
 }
 
 /* ================= cards & hand math ================= */
@@ -864,7 +1044,7 @@ function handValue(cards, noBJ){
   for(i=0;i<cards.length;i++){ total += rankVal(cards[i].rank); if(cards[i].rank==="A") aces++; }
   while(total > 21 && aces > 0){ total -= 10; aces--; }
   return { total: total, soft: aces > 0 && total <= 21, bust: total > 21,
-           pair: cards.length===2 && cards[0].rank===cards[1].rank,   /* equal ranks only */
+           pair: cards.length===2 && rankVal(cards[0].rank)===rankVal(cards[1].rank),
            blackjack: !noBJ && cards.length===2 && total===21 };
 }
 function cardHTML(c, opts){
@@ -891,49 +1071,91 @@ function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
 function fmtTC(tc){ tc = tc === 0 ? 0 : tc; var r = Math.round(tc*10)/10; return (r>0?"+":"") + r; }
 function roundTC(x){ var r = Math.round(x); return r === 0 ? 0 : r; }
 
-/* ================= basic strategy engine (8 decks; 4–8 deck charts) =================
-   Codes: H hit · S stand · D double else hit · Ds double else stand · P split
-          R surrender else hit · Rs surrender else stand · Rp surrender else split   */
+/* ================= basic strategy engine
+   Total-dependent charts from Wizard of Odds:
+   1 deck, 2 decks, and 4–8 decks (4, 6 and 8 share a chart). Codes:
+   H hit · S stand · D double else hit · Ds double else stand · P split
+   R surrender else hit · Rs surrender else stand · Rp surrender else split   */
 function stratCode(cards, up, rules, canSplit){
   var v = handValue(cards), t = v.total, u = rankVal(up.rank);
-  var h17 = rules.h17, das = rules.das, ls = rules.ls;
+  var h17 = rules.h17, das = rules.das, ls = rules.ls, fam = deckFamily(rules);
   if(v.pair && canSplit){
     var r = cards[0].rank, rv = rankVal(r);
     if(r === "A") return "P";
-    if(r === "8") return (h17 && ls && u === 11) ? "Rp" : "P";
+    if(r === "8") return (fam !== 1 && h17 && ls && u === 11) ? "Rp" : "P";
     if(rv === 10) return "S";
     if(r !== "5"){
-      var sp = false;
-      if(r === "9") sp = !(u === 7 || u >= 10);
-      else if(r === "7") sp = u <= 7;
-      else if(r === "6") sp = das ? (u <= 6) : (u >= 3 && u <= 6);
-      else if(r === "4") sp = das && (u === 5 || u === 6);
-      else sp = das ? (u <= 7) : (u >= 4 && u <= 7);       /* 2s and 3s */
-      if(sp) return "P";
+      var sp = false, spDas = false;
+      if(r === "9"){
+        if(fam === 1 && h17 && u === 11) spDas = true;          /* Ps vs ace in 1D H17 */
+        else sp = !(u === 7 || u >= 10);
+      } else if(r === "7"){
+        if(u <= 7) sp = true;
+        else if((fam === 1 || fam === 2) && u === 8) spDas = true;
+        else if(fam === 1 && u === 10) return ls ? "Rs" : "S";
+        else if(fam === 1 && h17 && u === 11) return ls ? "R" : "H";
+      } else if(r === "6"){
+        if(fam === 1 || fam === 2){ if(u <= 6) sp = true; else if(u === 7) spDas = true; }
+        else sp = das ? (u <= 6) : (u >= 3 && u <= 6);
+      } else if(r === "4"){
+        if(fam === 1){
+          if(u === 4) spDas = true;
+          else if(u === 5 || u === 6) return das ? "P" : "D";    /* Pd */
+        } else sp = das && (u === 5 || u === 6);
+      } else if(r === "2"){
+        if(fam === 1){ if(u === 2) spDas = true; else if(u >= 3 && u <= 7) sp = true; }
+        else sp = das ? (u <= 7) : (u >= 4 && u <= 7);
+      } else { /* 3s */
+        if(fam === 1){ if(u === 2 || u === 3 || u === 8) spDas = true; else if(u >= 4 && u <= 7) sp = true; }
+        else sp = das ? (u <= 7) : (u >= 4 && u <= 7);
+      }
+      if(sp || (spDas && das)) return "P";
+      if(spDas && r === "9") return "S";
       /* otherwise play the total below */
     }
   }
   if(v.soft){
     if(t >= 20) return "S";
-    if(t === 19) return (h17 && u === 6) ? "Ds" : "S";
+    if(t === 19) return (u === 6 && (fam === 1 || h17)) ? "Ds" : "S";
     if(t === 18){
       if(u >= 3 && u <= 6) return "Ds";
-      if(u === 2) return h17 ? "Ds" : "S";
-      return (u === 7 || u === 8) ? "S" : "H";
+      if(u === 2) return (h17 && fam !== 1) ? "Ds" : "S";
+      if(u === 7 || u === 8) return "S";
+      if(fam === 1 && !h17 && u === 11) return "S";
+      return "H";
     }
-    if(t === 17) return (u >= 3 && u <= 6) ? "D" : "H";
+    if(t === 17) return (u >= 3 && u <= 6 || (fam === 1 && u === 2)) ? "D" : "H";
     if(t === 15 || t === 16) return (u >= 4 && u <= 6) ? "D" : "H";
-    if(t === 13 || t === 14) return (u === 5 || u === 6) ? "D" : "H";
+    if(t === 13 || t === 14){
+      if(u === 5 || u === 6) return "D";
+      if(u === 4 && (fam === 1 || (fam === 2 && h17 && t === 14))) return "D";
+      return "H";
+    }
     return "H";
   }
-  if(t <= 8) return "H";
-  if(t === 9) return (u >= 3 && u <= 6) ? "D" : "H";
+  if(t <= 7) return "H";
+  if(t === 8) return (fam === 1 && (u === 5 || u === 6)) ? "D" : "H";
+  if(t === 9) return (u >= 3 && u <= 6 || ((fam === 1 || fam === 2) && u === 2)) ? "D" : "H";
   if(t === 10) return u <= 9 ? "D" : "H";
-  if(t === 11) return (u <= 10 || h17) ? "D" : "H";
+  if(t === 11) return (u <= 10 || h17 || fam === 1 || fam === 2) ? "D" : "H";
   if(t === 12) return (u >= 4 && u <= 6) ? "S" : "H";
   if(t <= 14) return u <= 6 ? "S" : "H";
-  if(t === 15){ if(u <= 6) return "S"; return (ls && (u === 10 || (h17 && u === 11))) ? "R" : "H"; }
-  if(t === 16){ if(u <= 6) return "S"; return (ls && u >= 9) ? "R" : "H"; }
+  if(t === 15){
+    if(u <= 6) return "S";
+    if(ls){
+      if(fam === 1){ if(h17 && u === 11) return "R"; }
+      else if(u === 10 || (h17 && u === 11)) return "R";
+    }
+    return "H";
+  }
+  if(t === 16){
+    if(u <= 6) return "S";
+    if(ls){
+      if(fam === 8 && u >= 9) return "R";
+      if((fam === 1 || fam === 2) && (u === 10 || u === 11)) return "R";
+    }
+    return "H";
+  }
   if(t === 17) return (ls && h17 && u === 11) ? "Rs" : "S";
   return "S";
 }
@@ -986,10 +1208,15 @@ function indexPlay(cards, up, tc, rules, ctx){
   if(ctx.canDouble){
     if(t===10 && u===10 && tc>=4) return { play:"D", name:"Double 10 vs 10 at +4" };
     if(t===11 && u===11){
-      if(!h17 && tc>=1) return { play:"D", name:"Double 11 vs ace at +1 (S17)" };
-      if(h17 && tc<-1) return { play:"H", name:"Hit 11 vs ace below −1 (H17)" };
+      var fam11 = deckFamily(rules);
+      if(fam11 === 8 && !h17){ if(tc>=1) return { play:"D", name:"Double 11 vs ace at +1 (S17, 4–8 decks)" }; }
+      else if(fam11 === 2){ if(tc<0) return { play:"H", name:"Hit 11 vs ace below 0 (double-deck)" }; }
+      else { if(tc<-1) return { play:"H", name:"Hit 11 vs ace below −1" }; }
     }
-    if(t===9 && u===2 && tc>=1) return { play:"D", name:"Double 9 vs 2 at +1" };
+    if(t===9 && u===2){
+      if(deckFamily(rules) === 8){ if(tc>=1) return { play:"D", name:"Double 9 vs 2 at +1" }; }
+      else if(tc<0) return { play:"H", name:"9 vs 2: hit below 0 (1–2 decks; basic strategy is double)" };
+    }
     if(t===10 && u===11 && tc >= (h17 ? 3 : 4)) return { play:"D", name:"Double 10 vs ace at " + (h17 ? "+3 (H17)" : "+4 (S17)") };
     if(t===9 && u===7 && tc>=3) return { play:"D", name:"Double 9 vs 7 at +3" };
   }
@@ -1009,23 +1236,109 @@ function decide(cards, up, tc, rules, ctx){
   if(d && d.play !== b.play) return { play: d.play, basic: b.play, code: b.code, name: d.name, deviates: true };
   return { play: b.play, basic: b.play, code: b.code, name: d ? d.name : null, deviates: false };
 }
-function insuranceCorrect(tc){ return tc >= 3; }
+function insuranceIndex(rules){ return nDecks(rules) <= 1 ? 2 : 3; }
+function insuranceCorrect(tc, rules){ return tc >= insuranceIndex(rules); }
 
-/* rough EV cost (in % of the bet) of common basic-strategy mistakes — teaching estimates */
-function mistakeCostPct(cards, up, picked, correct){
-  var v = handValue(cards), t = v.total, upv = rankVal(up.rank);
-  if(correct==="D" && picked!=="D") return v.soft ? 2.2 : 3.0;
-  if(picked==="D" && correct!=="D") return 3.4;
-  if(correct==="P") return 2.6;
-  if(picked==="P") return 3.0;
-  if(correct==="R") return 2.4;
-  if(picked==="R") return 4.5;
-  if(!v.soft && t>=12 && t<=16 && upv>=7) return 2.8;
-  if(!v.soft && t>=12 && t<=16) return 1.6;
-  if(v.soft && t===18) return 1.9;
-  if(v.soft) return 1.2;
-  if(t===11||t===10) return 2.6;
-  return 1.0;
+/* Approximate infinite-deck EVs for pricing mistakes (percent of the original bet). */
+var EV_P = {2:1/13,3:1/13,4:1/13,5:1/13,6:1/13,7:1/13,8:1/13,9:1/13,10:4/13,11:1/13};
+var evDealerMemo = {}, evHitMemo = {};
+function evDealer(total, soft, h17){
+  var k = total + "," + soft + "," + h17;
+  if(evDealerMemo[k]) return evDealerMemo[k];
+  if(total > 21){
+    if(soft) return evDealerMemo[k] = evDealer(total - 10, false, h17);
+    return evDealerMemo[k] = { bust: 1 };
+  }
+  if(total > 17 || (total === 17 && !(soft && h17))){
+    var done = {}; done[total] = 1; return evDealerMemo[k] = done;
+  }
+  var out = {}, c;
+  for(c = 2; c <= 11; c++){
+    var p = EV_P[c], t = total + c, s = soft || c === 11;
+    if(t > 21 && s){ t -= 10; s = false; }
+    var d = evDealer(t, s, h17), key;
+    for(key in d) out[key] = (out[key] || 0) + p * d[key];
+  }
+  return evDealerMemo[k] = out;
+}
+function evDistUp(up, h17){
+  var d = {}, c, skip = 0;
+  for(c = 2; c <= 11; c++){
+    var p = EV_P[c];
+    if((up === 10 && c === 11) || (up === 11 && c === 10)){ skip += p; continue; }
+    var t = up + c, s = (up === 11 || c === 11);
+    if(t > 21 && s){ t -= 10; s = false; }
+    var dist = evDealer(t, s, h17), key;
+    for(key in dist) d[key] = (d[key] || 0) + p * dist[key];
+  }
+  var z = 0, key;
+  for(key in d) z += d[key];
+  if(z) for(key in d) d[key] /= z;
+  return d;
+}
+function evStand(t, up, h17){
+  var d = evDistUp(up, h17), e = 0, k;
+  for(k in d){
+    var p = d[k];
+    if(k === "bust") e += p;
+    else if(t > +k) e += p;
+    else if(t < +k) e -= p;
+  }
+  return e;
+}
+function evBestAfter(t, soft, up, h17){
+  var k = t + "," + soft + "," + up + "," + h17;
+  if(evHitMemo[k] != null) return evHitMemo[k];
+  var es = evStand(t, up, h17), eh = evHitOnce(t, soft, up, h17, true);
+  return evHitMemo[k] = Math.max(es, eh);
+}
+function evHitOnce(t, soft, up, h17, rec){
+  var e = 0, c;
+  for(c = 2; c <= 11; c++){
+    var p = EV_P[c], nt = t + c, ns = soft || c === 11;
+    if(nt > 21 && ns){ nt -= 10; ns = false; }
+    if(nt > 21) e -= p;
+    else e += p * (rec ? evBestAfter(nt, ns, up, h17) : evBestAfter(nt, ns, up, h17));
+  }
+  return e;
+}
+function evDouble(t, soft, up, h17){
+  var e = 0, c;
+  for(c = 2; c <= 11; c++){
+    var p = EV_P[c], nt = t + c, ns = soft || c === 11;
+    if(nt > 21 && ns){ nt -= 10; ns = false; }
+    e += p * (nt > 21 ? -2 : 2 * evStand(nt, up, h17));
+  }
+  return e;
+}
+function evOneSplit(rank, up, h17, das){
+  var e = 0, c, one = rank === 11;
+  for(c = 2; c <= 11; c++){
+    var p = EV_P[c], t = rank + c, soft = (rank === 11 || c === 11);
+    if(t > 21 && soft){ t -= 10; soft = false; }
+    var evs = evStand(t, up, h17);
+    var evh = one ? evs : evHitOnce(t, soft, up, h17);
+    var evd = (das && !one) ? evDouble(t, soft, up, h17) : -Infinity;
+    e += p * Math.max(evs, evh, evd);
+  }
+  return e;
+}
+function evAction(act, cards, up, rules){
+  var v = handValue(cards), t = v.total, soft = v.soft, uv = rankVal(up.rank), h17 = !!(rules && rules.h17);
+  if(act === "R") return -0.5;
+  if(act === "S") return evStand(t, uv, h17);
+  if(act === "H") return evHitOnce(t, soft, uv, h17);
+  if(act === "D") return evDouble(t, soft, uv, h17);
+  if(act === "P") return 2 * evOneSplit(rankVal(cards[0].rank), uv, h17, !!(rules && rules.das));
+  return 0;
+}
+function insuranceAmt(bet){ return bet / 2; }
+function mistakeCostPct(cards, up, picked, correct, rules){
+  rules = rules || (typeof S !== "undefined" && S.rules) || DEFAULT_RULES;
+  if(picked === correct) return 0;
+  var cost = Math.abs(evAction(correct, cards, up, rules) - evAction(picked, cards, up, rules)) * 100;
+  if(!isFinite(cost) || cost < 0.1) cost = 0.1;
+  return Math.round(cost * 10) / 10;
 }
 
 /* explanations that follow the rules */
@@ -1059,7 +1372,7 @@ function explainBS(cards, up, rules){
   if(code==="Rs") return "Surrender 17 against an ace when the dealer hits soft 17: standing wins too rarely. (If you can't surrender, stand.)";
   if(play==="R") return "Surrender. Hard "+t+" against "+upTxt+" wins so rarely that giving up half the bet is the cheapest option.";
   if(t===11){
-    if(upv===11) return rules.h17 ? "Double 11 against an ace when the dealer hits soft 17 — the extra dealer outs make the double worth it." : "Hit 11 against an ace when the dealer stands on soft 17. It's a close call, but doubling loses a hair more. (At a true count of +1 or higher, double.)";
+    if(upv===11) return (rules.h17 || deckFamily(rules) !== 8) ? "Double 11 against an ace" + (deckFamily(rules)!==8 ? " — in a one- or two-deck game this is the basic play even when the dealer stands on soft 17." : " when the dealer hits soft 17 — the extra dealer outs make the double worth it.") : "Hit 11 against an ace when the dealer stands on soft 17 in a 4–8 deck game. It's a close call, but doubling loses a hair more. (At a true count of +1 or higher, double.)";
     return "Double 11 against "+upTxt+" — any 10 makes 21, and no card busts you.";
   }
   if(t===10) return play==="D" ? "Double hard 10 against "+upTxt+": you're the favorite and a 10-card makes 20." : "Hit hard 10 against "+upTxt+" — the double only pays against 9 or lower.";
@@ -1125,6 +1438,9 @@ function showView(name, focusTab){
   if(name === "review") renderReview();
   if(name === "sim") renderSim();
   if(name === "charts") updateChartHint();
+  if(typeof syncInstallPanel === "function") syncInstallPanel();
+  S.view = name;
+  if(typeof saveState === "function") saveState();
   setTimeout(updateTabFade, 60);
 }
 $("tabs").addEventListener("scroll", updateTabFade, { passive: true });
@@ -1144,12 +1460,17 @@ document.querySelectorAll("[data-goto-level]").forEach(function(b){
   b.addEventListener("click", function(){
     var n = parseInt(b.getAttribute("data-goto-level"), 10);
     showView("path");
-    startLevel(S.unlockAll ? n : Math.min(n, S.unlocked));
+    if(S.unlockAll || n <= S.unlocked) startLevel(n);
+    else {
+      var card = document.querySelector("#path-grid [data-level='"+n+"']") || document.querySelector("#lev-"+n) || $("path-grid");
+      scrollStage(card);
+    }
   });
 });
 
 /* ================= rules UI ================= */
 function syncRulesUI(){
+  $("rule-decks").value = String(nDecks());
   $("rule-soft17").value = S.rules.h17 ? "H" : "S";
   $("rule-das").value = S.rules.das ? "1" : "0";
   $("rule-ls").value = S.rules.ls ? "1" : "0";
@@ -1158,28 +1479,35 @@ function syncRulesUI(){
 function updateCopy(){
   var R = S.rules, sent = rulesSentence(R);
   $("drill-sub").textContent = "Endless mixed hands: hard, soft, pairs, and surrender spots. " + sent.charAt(0).toUpperCase() + sent.slice(1) + ". Every mistake is priced at your bet size so you can feel what sloppy play actually costs.";
-  $("sim-sub").textContent = "A real eight-deck shoe: " + sim17Word(R) + ", blackjack pays 3:2, double after split " + (R.das ? "allowed" : "not allowed") + ", late surrender " + (R.ls ? "offered" : "not offered") + ", 75% penetration. The coach grades every decision against basic strategy plus the Illustrious 18 and Fab 4 index plays at the whole-number true count — leave the count display on until you can track it yourself.";
-  $("sim-note").textContent = "Coach advice uses the charts for your rules plus index plays at the rounded true count (the same rounding Level 5 teaches). Up to four hands from splits; split aces take one card each and can't be resplit; surrender is for your first two cards of an unsplit hand only; insurance is graded against the +3 index.";
-  $("charts-sub").textContent = "The full chart for your rules — " + sent + ". The 4–8 deck charts are identical, so this is the exact chart every drill and the simulator coach grade against. Change the rules from the Rules button at the top.";
-  $("lab-sub").textContent = "Counting doesn't print money — it buys a small edge and a lot of variance. This lab turns your ramp into an hourly expectation and an honest risk-of-ruin number, using an eight-deck game with your table rules (" + rulesLabel(R) + ", 75% penetration).";
-  $("footer-note").textContent = "Training aid for the game as specified: 8 decks · " + rulesLabel(R) + " · blackjack pays 3:2 · Hi-Lo count. Index plays are the Illustrious 18 and Fab 4 (Schlesinger). Edge and risk figures in the Lab and Scorer are standard published approximations, not guarantees — the house edge is real, and no ramp outruns a bad game forever.";
+  $("sim-sub").textContent = "A real " + decksPhrase(R) + " shoe: " + sim17Word(R) + ", blackjack pays 3:2, double after split " + (R.das ? "allowed" : "not allowed") + ", late surrender " + (R.ls ? "offered" : "not offered") + ", 75% penetration. The coach grades every decision against basic strategy plus the Illustrious 18 and Fab 4 index plays at the whole-number true count — leave the count display on until you can track it yourself.";
+  $("sim-note").textContent = "Coach advice uses the charts for your rules plus index plays at the rounded true count (the same rounding Level 5 teaches). Up to four hands from splits; split aces take one card each and can't be resplit; surrender is for your first two cards of an unsplit hand only; insurance is graded against the +" + insuranceIndex(R) + " index.";
+  $("charts-sub").textContent = "The full chart for your rules — " + sent + ". " + (deckFamily(R)===8 ? "The 4–, 6– and 8-deck charts are identical. " : deckFamily(R)===1 ? "This is the Wizard of Odds single-deck chart. " : "This is the Wizard of Odds double-deck chart. ") + "Every drill and the simulator coach grade against it. Change the rules from the Rules button at the top.";
+  $("lab-sub").textContent = "Counting doesn't print money — it buys a small edge and a lot of variance. This lab turns your ramp into an hourly expectation and an honest risk-of-ruin number, using " + decksPhrase(R) + " with your table rules (" + rulesLabel(R) + ", 75% penetration).";
+  $("footer-note").textContent = "Training aid for the game as specified: " + decksPhrase(R) + " · " + rulesLabel(R) + " · blackjack pays 3:2 · Hi-Lo count. Index plays are the Illustrious 18 and Fab 4 (Schlesinger), with the numbers that change in one- and two-deck games. Edge and risk figures in the Lab and Scorer are standard published approximations, not guarantees — the house edge is real, and no ramp outruns a bad game forever.";
   var showSur = !!R.ls;
   $("sim-sur-btn").classList.toggle("hidden", !showSur);
+  var convBtn = document.querySelector('#cd-modes [data-cmode="conv"]');
+  if(convBtn) convBtn.textContent = "True count (÷ " + nDecks() + " deck" + (nDecks()===1?"":"s") + ")";
+  var fixed = $("rules-fixed");
+  if(fixed) fixed.textContent = "Always: blackjack pays 3:2 · dealer peeks for blackjack · one card on split aces. Deck count, soft 17, double after split and late surrender drive every chart, drill, the simulator coach and the index plays.";
+  if(typeof cdRenderOpts === "function" && typeof CD !== "undefined" && CD.mode === "conv" && !CD.running) cdRenderOpts();
 }
+
 function onRulesChanged(){
   saveState();
   syncRulesUI(); updateCopy(); buildCharts(); syncScorerFromRules(); runLab(); runScorer(); renderPath();
   if(typeof drillRestart === "function") drillRestart();
-  if(typeof renderSim === "function" && SIM) renderSim();
+  if(typeof simOnRulesChanged === "function") simOnRulesChanged();
+  else if(typeof renderSim === "function" && SIM) renderSim();
   if(typeof renderReview === "function") renderReview();
   if(typeof ixRulesChanged === "function") ixRulesChanged();
   if(typeof spdRulesChanged === "function") spdRulesChanged();
 }
 function readRulesFromUI(){
-  S.rules = { h17: $("rule-soft17").value === "H", das: $("rule-das").value === "1", ls: $("rule-ls").value === "1" };
+  S.rules = { decks: clampDecks($("rule-decks").value), h17: $("rule-soft17").value === "H", das: $("rule-das").value === "1", ls: $("rule-ls").value === "1" };
   onRulesChanged();
 }
-["rule-soft17","rule-das","rule-ls"].forEach(function(id){ $(id).addEventListener("change", readRulesFromUI); });
+["rule-decks","rule-soft17","rule-das","rule-ls"].forEach(function(id){ $(id).addEventListener("change", readRulesFromUI); });
 $("rules-btn").addEventListener("click", function(){
   var p = $("rules-panel"), open = p.hasAttribute("hidden");
   if(open) p.removeAttribute("hidden"); else p.setAttribute("hidden", "");
@@ -1187,7 +1515,7 @@ $("rules-btn").addEventListener("click", function(){
   if(open) $("rule-soft17").focus();
 });
 $("rules-default").addEventListener("click", function(){
-  S.rules = { h17: DEFAULT_RULES.h17, das: DEFAULT_RULES.das, ls: DEFAULT_RULES.ls }; onRulesChanged();
+  S.rules = { decks: DEFAULT_RULES.decks, h17: DEFAULT_RULES.h17, das: DEFAULT_RULES.das, ls: DEFAULT_RULES.ls }; onRulesChanged();
 });
 $("unlock-all").addEventListener("click", function(){ S.unlockAll = true; saveState(); refreshStrip(); renderPath(); $("rules-saved").textContent = "Everything is unlocked. Your level passes are still tracked separately."; });
 $("reset-all").addEventListener("click", function(){
@@ -1209,15 +1537,21 @@ function renderPath(){
   var g = $("path-grid");
   g.innerHTML = LEVELS.map(function(L){
     var done = !!S.passed[L.n], locked = L.n > S.unlocked && !S.unlockAll;
-    return '<div class="level-card'+(done?" done":"")+(locked?" locked":"")+'">'
+    return '<div class="level-card'+(done?" done":"")+(locked?" locked":"")+'" id="lev-'+L.n+'" data-level="'+L.n+'">'
       + '<div class="lv">Level '+L.n+'</div><h3>'+L.name+'</h3><p>'+L.desc+'</p>'
       + '<div class="meta">'+L.meta+'</div>'
       + (done ? '<span class="badge">✓ Passed</span>' : locked ? '<span class="badge lock">🔒 Pass Level '+(L.n-1)+' first</span>' : '')
-      + '<button data-level="'+L.n+'" '+(locked?"disabled":"")+'>'+(done?"Retake":(S.curLevel===L.n?"Restart":"Start"))+'<span class="sr-only"> Level '+L.n+'</span></button></div>';
+      + (locked ? '' : '<button data-level="'+L.n+'">'+(done?"Retake":(S.curLevel===L.n?"Restart":"Start"))+'<span class="sr-only"> Level '+L.n+'</span></button>') + '</div>';
   }).join("");
   g.querySelectorAll("button[data-level]").forEach(function(b){
     b.addEventListener("click", function(){ startLevel(parseInt(b.getAttribute("data-level"),10)); });
   });
+}
+function scrollStage(el){
+  if(!el) return;
+  var tabs = $("tabs-wrap"), off = ((tabs && tabs.getBoundingClientRect().height) || 60) + 8;
+  var y = el.getBoundingClientRect().top + window.scrollY - off;
+  window.scrollTo({ top: Math.max(0, y), behavior: smooth() });
 }
 function stageShell(title, sub){
   var st = $("stage");
@@ -1225,7 +1559,7 @@ function stageShell(title, sub){
     + '<div class="progress-line"><span id="q-prog"></span><div class="bar"><i id="q-bar"></i></div><span id="q-score"></span></div>'
     + '<div id="q-body"></div><div class="feedback" id="q-fb" role="status" aria-live="polite"></div>'
     + '<div class="actions"><button id="q-next" class="go hidden">Next <kbd>N</kbd></button></div></div>';
-  st.scrollIntoView({ behavior: smooth(), block: "start" });
+  scrollStage(st);
   return st;
 }
 function setProg(done, total, right){
@@ -1238,21 +1572,30 @@ function finishLevel(L, right, total, need){
   var body = $("q-body"), fb = $("q-fb");
   var pass = right >= need;
   $("q-next").classList.add("hidden");
-  $("q-bar").style.width = "100%";
+  $("q-bar").style.width = (100 * right / total) + "%";
+  $("q-bar").classList.toggle("fail", !pass);
   $("q-prog").textContent = "Level " + L.n + " complete";
   $("q-score").textContent = right + " / " + total;
   body.innerHTML = "";
   fb.className = "feedback show " + (pass ? "right" : "wrong");
+  var acts = '<div class="actions result-actions">' +
+    (pass && L.n < 6 ? '<button class="go" id="q-next-level">Next level <kbd>N</kbd></button>' : '') +
+    '<button class="' + (pass ? "" : "go") + '" id="q-retry">Try again</button>' +
+    '<button id="q-back-path">Back to the path</button></div>';
   if(pass){
     S.passed[L.n] = true;
     if(L.n === S.unlocked && L.n < 6) S.unlocked = L.n + 1;
     fb.innerHTML = '<div class="verdict">Passed — ' + right + ' of ' + total + '.</div>' +
       (L.n<6 ? 'Level ' + (L.n+1) + ' is unlocked.' : 'Path complete. The table, the lab, and the scorer are all yours — the simulator coach will keep grading you on everything you learned here.') +
       (L.n===3 ? ' The Table Simulator is now unlocked.' : '') +
-      (L.n===5 ? ' The Bankroll Lab and Game Scorer are now unlocked.' : '') + ' Progress saved.';
+      (L.n===5 ? ' The Bankroll Lab and Game Scorer are now unlocked.' : '') + ' Progress saved.' + acts;
   } else {
-    fb.innerHTML = '<div class="verdict">Not yet — ' + right + ' of ' + total + ', needed ' + need + '.</div>Run it again. The hands reshuffle every attempt, and the mistakes you just made are the cheapest tuition in this game.';
+    fb.innerHTML = '<div class="verdict">Not yet — ' + right + ' of ' + total + ', needed ' + need + '.</div>Run it again. The questions and answers are reshuffled every attempt, and the mistakes you just made are the cheapest tuition in this game.' + acts;
   }
+  var retry = $("q-retry"), nxt = $("q-next-level"), back = $("q-back-path");
+  if(retry) retry.addEventListener("click", function(){ startLevel(L.n); });
+  if(nxt) nxt.addEventListener("click", function(){ startLevel(L.n + 1); });
+  if(back) back.addEventListener("click", function(){ $("stage").innerHTML = ""; $("tab-path").focus(); window.scrollTo({ top: $("path-grid").getBoundingClientRect().top + window.scrollY - 80, behavior: smooth() }); });
   saveState(); refreshStrip(); renderPath();
 }
 
@@ -1298,6 +1641,15 @@ function recordAnswer(h, right){
   return info;
 }
 function srsDue(){ return S.srs.filter(function(x){ return x.due <= S.qn; }); }
+function srsDueForFocus(focus){
+  var due = srsDue();
+  if(!focus || focus === "all") return due;
+  return due.filter(function(it){
+    var fam = familyOf(handFromItem(it));
+    if(focus === "hard") return fam.indexOf("hard") === 0;
+    return fam === focus;
+  });
+}
 function srsPick(){
   if(!S.srs.length) return null;
   var due = srsDue();
@@ -1327,7 +1679,8 @@ function genHand(kind, rules){
     return genHand("hard", rules);
   }
   if(kind === "pair"){
-    var pr = pickOf(["A","2","3","4","5","6","7","8","9","10"]); pr = mapTen(pr);
+    var pr = pickOf(["A","2","3","4","5","6","7","8","9","10"]);
+    if(pr === "10") return { cards:[makeCard(pickOf(TENS)), makeCard(pickOf(TENS))], up: makeCard(randomRank()) };
     return { cards:[makeCard(pr), makeCard(pr)], up: makeCard(randomRank()) };
   }
   if(kind === "soft"){
@@ -1343,7 +1696,7 @@ function genHand(kind, rules){
   }
   /* hard: two cards, no ace, never a pair (hard 20 comes from two different ten-value cards) */
   var pool = ["2","3","4","5","6","7","8","9","10","10","J","Q","K"], a, b;
-  do { a = pickOf(pool); b = pickOf(pool); } while(a === b);
+  do { a = pickOf(pool); b = pickOf(pool); } while(rankVal(a) === rankVal(b));
   return { cards:[makeCard(a), makeCard(b)], up: makeCard(randomRank()) };
 }
 
@@ -1422,17 +1775,21 @@ function runLevel0(L){
   S.curLevel = 0;
   stageShell("Level 0 — First steps", "Pass: 7 of 8. Read the short brief, then answer.");
   var body = $("q-body"), fb = $("q-fb"), next = $("q-next");
-  body.innerHTML = '<div class="lesson"><p><b class="k">The game in one paragraph:</b> you and the dealer each get two cards; one dealer card shows. Closest to 21 without going over wins. Number cards are face value, faces are 10, and an ace is 11 or 1 — whichever helps. Blackjack pays <b class="k">3:2</b>. The dealer plays by fixed rules; by default the dealer stands on all 17s (you can switch to H17 in the Rules). Every game here uses eight decks.</p>'
+  body.innerHTML = '<div class="lesson"><p><b class="k">The game in one paragraph:</b> you and the dealer each get two cards; one dealer card shows. Closest to 21 without going over wins. Number cards are face value, faces are 10, and an ace is 11 or 1 — whichever helps. Blackjack pays <b class="k">3:2</b>. The dealer plays by fixed rules; by default the dealer stands on all 17s (you can switch to H17 in the Rules). Set the number of decks (1, 2, 4, 6 or 8) from the Rules button — it defaults to eight, which is the usual shoe game.</p>'
     + '<p><b class="k">Your only real decisions:</b> hit, stand, double (one card, double bet), split a pair into two hands, or surrender half your bet and fold. Basic strategy is the mathematically best choice for every combination — Levels 1–3 burn it in.</p>'
     + '<p><b class="k">Why counting comes last:</b> perfect basic strategy cuts the house edge to about 0.4%. Counting can move it the other way — but only for a player whose decisions never leak. Decisions first, money second.</p></div>'
     + '<div class="actions"><button class="go" id="l0-start">Start the check — 8 questions</button></div>';
   fb.className = "feedback";
   $("l0-start").addEventListener("click", function(){
     var i = 0, right = 0;
+    var quiz = shuffle(L0_QUESTIONS).map(function(Q){
+      var order = shuffle(Q.opts.map(function(_, idx){ return idx; }));
+      return { q: Q.q, why: Q.why, opts: order.map(function(idx){ return Q.opts[idx]; }), a: order.indexOf(Q.a) };
+    });
     function step(){
-      setProg(i, L0_QUESTIONS.length, right);
+      setProg(i, quiz.length, right);
       next.classList.add("hidden");
-      var Q = L0_QUESTIONS[i];
+      var Q = quiz[i];
       body.innerHTML = '<p style="font-weight:700; font-size:1.05rem; margin:6px 0 4px;">' + esc(Q.q) + '</p><div class="actions" style="flex-direction:column; align-items:stretch;">'
         + Q.opts.map(function(o,idx){ return '<button data-o="'+idx+'" style="flex:1 1 auto; text-align:left;">'+esc(o)+'<kbd>'+(idx+1)+'</kbd></button>'; }).join("") + '</div>';
       fb.className = "feedback";
@@ -1448,12 +1805,12 @@ function runLevel0(L){
           i++;
           fb.className = "feedback show " + (ok ? "right" : "wrong");
           fb.innerHTML = '<div class="verdict">' + (ok ? "Right." : "Not quite.") + '</div>' + esc(Q.why);
-          setNextLabel(next, i >= L0_QUESTIONS.length ? "See result" : "Next");
+          setNextLabel(next, i >= quiz.length ? "See result" : "Next");
           next.classList.remove("hidden");
         });
       });
     }
-    next.addEventListener("click", function(){ if(i >= L0_QUESTIONS.length) finishLevel(L, right, L0_QUESTIONS.length, 7); else step(); });
+    next.addEventListener("click", function(){ if(i >= quiz.length) finishLevel(L, right, quiz.length, 7); else step(); });
     step();
   });
 }
@@ -1505,7 +1862,7 @@ var RAMP = [ {tc:-99,u:1},{tc:1,u:1},{tc:2,u:2},{tc:3,u:4},{tc:4,u:8},{tc:5,u:12
 function rampUnits(tc){ var u = 1; RAMP.forEach(function(r){ if(tc >= r.tc) u = r.u; }); return u; }
 function runLevel5(L){
   S.curLevel = 5;
-  stageShell("Level 5 — True count & the ramp", "Pass: 12 of 15. True count = running count ÷ decks remaining (out of 8), rounded to the nearest whole number. Ramp: TC ≤1 → 1 unit · 2 → 2 · 3 → 4 · 4 → 8 · 5+ → 12. Unit = $25.");
+  stageShell("Level 5 — True count & the ramp", "Pass: 12 of 15. True count = running count ÷ decks remaining (out of " + nDecks() + "), rounded to the nearest whole number. Ramp: TC ≤1 → 1 unit · 2 → 2 · 3 → 4 · 4 → 8 · 5+ → 12. Unit = $25.");
   var body = $("q-body"), fb = $("q-fb"), next = $("q-next");
   var round = 0, right = 0, TOTAL = 15;
   function sgn(n){ return (n>0?"+":"") + n; }
@@ -1514,18 +1871,21 @@ function runLevel5(L){
     next.classList.add("hidden");
     var decksLeft, trueTc, rcVal, tcRaw;
     do {   /* never ask a question that lands exactly on a .5 */
-      decksLeft = [2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7][Math.floor(Math.random()*11)];
+      var nd = nDecks(), pool = [], x;
+      if(nd === 1) pool = [0.6,0.7,0.8,0.9];
+      else { for(x = Math.max(0.5, nd-3.5); x <= nd-0.5; x += 0.5) pool.push(Math.round(x*10)/10); }
+      decksLeft = pool[Math.floor(Math.random()*pool.length)];
       trueTc = Math.floor(Math.random()*11) - 3;
       rcVal = Math.round(trueTc * decksLeft) + (Math.random()<0.4 ? (Math.random()<0.5?-1:1) : 0);
       tcRaw = rcVal / decksLeft;
     } while(Math.abs(Math.abs(tcRaw % 1) - 0.5) < 1e-9);
     var tc = roundTC(tcRaw);
     var betUnits = rampUnits(tc), bet$ = betUnits * 25;
-    var seenPct = Math.round(100 * (1 - decksLeft/DECKS));
+    var seenPct = Math.round(100 * (1 - decksLeft/nDecks()));
     var guessTc = 0;
     body.innerHTML = '<div class="felt"><div class="seat-label"><span>Shoe state</span><span class="total">RC ' + sgn(rcVal) + '</span></div>'
       + '<div class="shoe-vis"><div class="shoe-track"><div class="shoe-fill" style="width:' + (100 - seenPct) + '%"></div><div class="shoe-cut" style="left:75%"></div></div>'
-      + '<span class="mono" style="font-size:.85rem; white-space:nowrap;">' + decksLeft.toFixed(1) + ' of 8 decks left</span></div>'
+      + '<span class="mono" style="font-size:.85rem; white-space:nowrap;">' + decksLeft.toFixed(1) + ' of ' + nDecks() + ' decks left</span></div>'
       + '<div class="seat-label"><span>Running count</span><span class="total">' + sgn(rcVal) + '</span></div></div>'
       + '<p class="note" style="margin-top:10px;">Step 1 — the true count (rounded):</p>'
       + '<div class="stepper"><button id="tc-minus" aria-label="Minus one">−</button><div class="val" aria-live="polite"><span id="tc-val">0</span></div><button id="tc-plus" aria-label="Plus one">+</button></div>'
@@ -1614,7 +1974,7 @@ function runLevel6(L){
       + '<div class="actions"><button data-ins="1">Take insurance<kbd>Y</kbd></button><button data-ins="0">No insurance<kbd>N</kbd></button></div>'
       + '<p class="kbd-hint">Keys: <kbd>Y</kbd> take · <kbd>N</kbd> decline · then <kbd>N</kbd> for next</p>';
     fb.className = "feedback";
-    var want = insuranceCorrect(Q.tc);
+    var want = insuranceCorrect(Q.tc, R);
     body.querySelectorAll("button[data-ins]").forEach(function(b){
       b.addEventListener("click", function(){
         var pick = b.getAttribute("data-ins") === "1", ok = pick === want;
@@ -1697,8 +2057,8 @@ function initDrill(){
   function step(){
     next.classList.add("hidden");
     var bet = parseInt($("drill-bet").value, 10), focus = $("drill-focus").value, hand = null;
-    if(focus === "all" && Math.random() < 0.25){
-      var due = srsDue();
+    if(Math.random() < 0.25){
+      var due = srsDueForFocus(focus);
       if(due.length){ due.sort(function(a,b){ return a.box - b.box || a.due - b.due; }); hand = handFromItem(due[0]); }
     }
     bsQuestion({ body: body, fb: fb, kind: focus, bet: bet, hand: hand, onAnswer: function(ok){
@@ -1743,7 +2103,7 @@ function runReview(){
   stage.innerHTML = '<div class="panel"><h3 style="margin-bottom:2px;">Missed-hand review</h3><p class="note" id="rv-line" style="margin:0 0 6px;"></p>'
     + '<div id="rv-body"></div><div class="feedback" id="rv-fb" role="status" aria-live="polite"></div>'
     + '<div class="actions"><button id="rv-next" class="go hidden">Next <kbd>N</kbd></button><button id="rv-end">End review</button></div></div>';
-  stage.scrollIntoView({ behavior: smooth(), block: "start" });
+  scrollStage(stage);
   var body = $("rv-body"), fb = $("rv-fb"), next = $("rv-next");
   function step(){
     next.classList.add("hidden");
@@ -1776,7 +2136,8 @@ function freshSim(){
 }
 function buildShoe(){
   var s = [], d, r, su;
-  for(d = 0; d < DECKS; d++) for(r = 0; r < RANKS.length; r++) for(su = 0; su < 4; su++)
+  var n = nDecks();
+  for(d = 0; d < n; d++) for(r = 0; r < RANKS.length; r++) for(su = 0; su < 4; su++)
     s.push({ rank: RANKS[r], suit: SUITS[su] });
   for(var i = s.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = s[i]; s[i] = s[j]; s[j] = t; }
   return s;
@@ -1788,7 +2149,7 @@ function simDraw(countIt){
   return c;
 }
 function holeHidden(){ return (SIM.phase === "play" || SIM.phase === "insurance") && SIM.dealer[1] && SIM.dealer[1].faceDown; }
-/* Remaining cards are the undealt shoe only — never include the hole card or table cards, and never exceed 416. */
+/* Remaining cards are the undealt shoe only — never include the hole card or table cards, and never exceed the shoe size. */
 function cardsLeft(){ return SIM.shoe.length; }
 function decksLeft(){ return Math.max(cardsLeft() / 52, 0.5); }
 function simTCraw(){ return SIM.rc / decksLeft(); }
@@ -1800,7 +2161,7 @@ function revealHole(){
 }
 function simCtx(h){
   var R = S.rules, first = h.cards.length === 2 && !h.acted && !h.done;
-  var isPair = h.cards.length === 2 && h.cards[0].rank === h.cards[1].rank;
+  var isPair = h.cards.length === 2 && rankVal(h.cards[0].rank) === rankVal(h.cards[1].rank);
   return {
     canDouble: first && SIM.bank >= h.bet && (!h.fromSplit || R.das) && !h.fromSplitAce,
     canSplit: first && isPair && SIM.hands.length < 4 && SIM.bank >= h.bet && !h.fromSplitAce,
@@ -1823,7 +2184,7 @@ function renderSim(){
       + '<div class="hand">' + handHTML(h.cards) + '</div>';
   }).join("");
   var left = cardsLeft();
-  var pct = Math.max(0, 100 * left / SHOE_SIZE);
+  var pct = Math.max(0, 100 * left / shoeSize());
   $("sim-shoe-fill").style.width = pct + "%";
   $("sim-shoe-txt").textContent = left + " cards";
   $("sim-bank").textContent = fmt$(SIM.bank);
@@ -1834,7 +2195,7 @@ function renderSim(){
   $("sim-grade-acc").textContent = SIM.stats.graded ? Math.round(100 * SIM.stats.right / SIM.stats.graded) + "%" : "—";
   $("sim-rc").textContent = (SIM.rc > 0 ? "+" : "") + SIM.rc;
   $("sim-tc").innerHTML = fmtTC(simTC()) + ' <small>(' + fmtTC(Math.round(simTCraw() * 10) / 10) + ' exact)</small>';
-  $("sim-decks").textContent = decksLeft().toFixed(1) + " of 8";
+  $("sim-decks").textContent = decksLeft().toFixed(1) + " of " + nDecks();
   $("sim-count-box").style.display = $("sim-show-count").checked ? "" : "none";
   $("sim-deal").innerHTML = "Deal — bet " + fmt$(SIM.bet) + " <kbd>Enter</kbd>";
   $("sim-deal").disabled = !(SIM.phase === "bet" && SIM.bet > 0 && SIM.bank >= SIM.bet);
@@ -1843,6 +2204,7 @@ function renderSim(){
     ch.disabled = !(SIM.phase === "bet" && SIM.bet + parseInt(ch.getAttribute("data-chip"), 10) <= SIM.bank);
   });
   updateSimActions();
+  simLiveClass();
 }
 function updateSimActions(){
   var bar = $("sim-actions"), betbar = $("sim-betbar"), insbar = $("sim-ins-bar"), note = $("sim-ins-note");
@@ -1856,8 +2218,11 @@ function updateSimActions(){
     bar.querySelector('[data-act="R"]').disabled = !c.canSurrender;
   } else if(SIM.phase === "insurance"){
     betbar.classList.add("hidden"); bar.classList.add("hidden"); insbar.classList.remove("hidden");
-    var amt = Math.floor(SIM.hands[0].bet / 2), can = SIM.bank >= amt && amt > 0;
-    $("sim-ins-yes").innerHTML = "Take insurance — " + fmt$(amt) + "<kbd>Y</kbd>";
+    var h0 = SIM.hands[0], bj = handValue(h0.cards).blackjack, amt = insuranceAmt(h0.bet);
+    var can = bj || (SIM.bank >= amt && amt > 0);
+    $("sim-ins-yes").innerHTML = bj
+      ? ("Take even money — " + fmt$(h0.bet) + " at 1:1<kbd>Y</kbd>")
+      : ("Take insurance — " + fmt$(amt) + "<kbd>Y</kbd>");
     $("sim-ins-yes").disabled = !can;
     if(!can){ note.textContent = "Not enough bankroll left to cover insurance (" + fmt$(amt) + ")."; note.classList.remove("hidden"); } else note.classList.add("hidden");
   } else {
@@ -1879,17 +2244,21 @@ function gradeAction(h, pick){
   if(d.deviates) note = "Index play — " + esc(d.name) + " (true count " + fmtTC(tc) + "). Basic strategy alone says " + ACTION_NAME[d.basic] + ".";
   else if(d.name) note = "Index check — " + esc(d.name) + "; it agrees with basic strategy (true count " + fmtTC(tc) + ").";
   else note = "Basic strategy (no index play at true count " + fmtTC(tc) + ").";
+  var why = "";
+  try { why = " " + explainBS(h.cards, up, R); } catch(err){ why = ""; }
   var extra = "";
   if(correct === "R") extra = " Surrendering halves the loss on a hand that wins too rarely.";
   if((d.code === "D" || d.code === "Ds") && !ctx.canDouble && h.cards.length > 2) extra = " You can't double after hitting, so " + ACTION_NAME[correct].toLowerCase() + ".";
   else if((d.code === "D" || d.code === "Ds") && !ctx.canDouble && h.fromSplit && !R.das) extra = " Double after split isn't allowed in your rules, so " + ACTION_NAME[correct].toLowerCase() + ".";
   if((d.code === "R" || d.code === "Rs") && !ctx.canSurrender) extra = " Surrender is only for your first two cards of an unsplit hand, so " + ACTION_NAME[correct].toLowerCase() + ".";
-  coachSay((ok ? "<b>✓ Correct — " + ACTION_NAME[pick] + ".</b> " : "<b>✗ Coach: " + ACTION_NAME[correct] + ".</b> ") + note + extra);
+  coachSay((ok ? "<b>✓ Correct — " + ACTION_NAME[pick] + ".</b> " : "<b>✗ Coach: " + ACTION_NAME[correct] + ".</b> ") + note + why + extra);
   S.sim.stats = SIM.stats;
 }
 function simDeal(){
   if(SIM.phase !== "bet" || SIM.bet <= 0 || SIM.bank < SIM.bet) return;
-  if(cardsLeft() < 60 || SIM.dealt >= CUT_CARDS){ SIM.shoe = buildShoe(); SIM.dealt = 0; SIM.rc = 0; }
+  var minLeft = Math.max(10, Math.min(60, Math.round(shoeSize() * 0.12)));
+  var reshuffled = false;
+  if(cardsLeft() < minLeft || SIM.dealt >= cutCards()){ SIM.shoe = buildShoe(); SIM.dealt = 0; SIM.rc = 0; reshuffled = true; }
   coachSay("");
   SIM.bank -= SIM.bet;
   SIM.lastBet = SIM.bet;
@@ -1899,29 +2268,45 @@ function simDeal(){
   SIM.hands = [{ cards: [p1, p2], bet: SIM.bet, doubled: false, acted: false, result: "", fromSplit: false, done: false }];
   SIM.active = 0; SIM.insBet = 0; SIM.insNote = "";
   var dv = handValue(SIM.dealer), pv = handValue(SIM.hands[0].cards);
+  var lead = reshuffled ? "New shoe shuffled — the running count is back at 0. " : "";
   if(up.rank === "A"){
     SIM.phase = "insurance";
-    simMsg(pv.blackjack ? "Dealer shows an ace — even money / insurance?" : "Dealer shows an ace — insurance?");
+    simMsg(lead + (pv.blackjack ? "Dealer shows an ace — even money / insurance?" : "Dealer shows an ace — insurance?"));
     renderSim(); return;
   }
-  if(rankVal(up.rank) === 10 && dv.blackjack){ revealAndSettle(); return; }
-  if(pv.blackjack){ revealAndSettle(); return; }
+  if(rankVal(up.rank) === 10 && dv.blackjack){ if(lead) simMsg(lead.trim()); revealAndSettle(); return; }
+  if(pv.blackjack){ if(lead) simMsg(lead.trim()); revealAndSettle(); return; }
   SIM.phase = "play";
-  simMsg("Your play");
+  simMsg(lead + "Your play");
   renderSim();
+  simRevealActions();
 }
 function simInsurance(take){
-  var h = SIM.hands[0], amt = Math.floor(h.bet / 2), tc = simTC();
-  if(take && SIM.bank < amt) return;
-  var want = insuranceCorrect(tc), ok = take === want;
+  var h = SIM.hands[0], amt = insuranceAmt(h.bet), tc = simTC(), bj = handValue(h.cards).blackjack;
+  var idx = insuranceIndex(S.rules);
+  if(take && !bj && SIM.bank < amt) return;
+  var want = insuranceCorrect(tc, S.rules), ok = take === want;
   SIM.stats.graded++; if(ok) SIM.stats.right++;
   S.sim.stats = SIM.stats;
-  SIM.insNote = (ok ? "<b>✓ Correct — " : "<b>✗ Coach: ") + (want ? "take insurance" : "decline insurance") + ".</b> True count is " + fmtTC(tc) + (want ? ", at or above the +3 index." : ", below the +3 index — insurance is a losing side bet.");
+  var verb = bj ? (want ? "take even money" : "decline even money") : (want ? "take insurance" : "decline insurance");
+  SIM.insNote = (ok ? "<b>✓ Correct — " : "<b>✗ Coach: ") + verb + ".</b> True count is " + fmtTC(tc)
+    + (want ? ", at or above the +" + idx + " index." : ", below the +" + idx + " index — insurance is a losing side bet.");
+  if(take && bj){
+    h.result = "Even money — win " + fmt$(h.bet) + " at 1:1";
+    SIM.bank += h.bet * 2;
+    SIM.stats.played++; SIM.stats.w++;
+    h.done = true;
+    SIM.insBet = 0;
+    SIM.insNote += " <b>Even money pays 1:1 on the full bet.</b>";
+    coachSay(SIM.insNote);
+    finishRound();
+    return;
+  }
   if(take){ SIM.insBet = amt; SIM.bank -= amt; }
   coachSay(SIM.insNote);
   var dv = handValue(SIM.dealer);
   if(dv.blackjack){ revealAndSettle(); return; }
-  if(handValue(h.cards).blackjack){ revealAndSettle(); return; }
+  if(bj){ revealAndSettle(); return; }
   SIM.phase = "play";
   simMsg(take ? "Dealer has no blackjack — insurance lost. Your play" : "Your play");
   renderSim();
@@ -2015,6 +2400,31 @@ function finishRound(){
   S.sim.bank = SIM.bank; S.sim.stats = SIM.stats; saveState();
   renderSim();
 }
+
+function simLiveClass(){
+  var v = $("view-sim");
+  if(v) v.classList.toggle("live-hand", !!(SIM && (SIM.phase === "play" || SIM.phase === "insurance")));
+  var bar = $("sim-betbar");
+  if(bar) bar.classList.toggle("hidden-during-hand", !!(SIM && SIM.phase === "play"));
+}
+function simRevealActions(){
+  var a = $("sim-actions");
+  if(a && SIM && SIM.phase === "play" && window.innerWidth < 700){
+    a.scrollIntoView({ block: "nearest", behavior: "instant" in window ? "instant" : "auto" });
+  }
+}
+function simOnRulesChanged(){
+  if(!SIM) return;
+  if(SIM.phase !== "bet"){
+    SIM.phase = "bet"; SIM.hands = []; SIM.dealer = []; SIM.bet = 0; SIM.active = 0;
+    simMsg("Rules changed — the hand was cancelled and a new " + decksPhrase() + " shoe was shuffled.");
+  } else {
+    simMsg("Fresh " + decksPhrase() + " shoe shuffled");
+  }
+  SIM.shoe = buildShoe(); SIM.dealt = 0; SIM.rc = 0;
+  coachSay("");
+  renderSim();
+}
 function initSim(){
   SIM = freshSim();
   SIM.shoe = buildShoe();
@@ -2036,7 +2446,7 @@ function initSim(){
   $("sim-ins-no").addEventListener("click", function(){ simAct("N"); });
   $("sim-newshoe").addEventListener("click", function(){
     if(SIM.phase !== "bet") return;
-    SIM.shoe = buildShoe(); SIM.dealt = 0; SIM.rc = 0; simMsg("Fresh eight-deck shoe shuffled"); renderSim();
+    SIM.shoe = buildShoe(); SIM.dealt = 0; SIM.rc = 0; simMsg("Fresh " + decksPhrase() + " shoe shuffled"); renderSim();
   });
   $("sim-rebuy").addEventListener("click", function(){
     SIM.bank += 1000; S.sim.rebuys += 1000; S.sim.bank = SIM.bank; saveState(); renderSim();
@@ -2049,7 +2459,11 @@ function initSim(){
 /* ================= shared bits for the counting, index and speed features ================= */
 function sgn(n){ return (n > 0 ? "+" : "") + n; }
 function pctOf(r, n){ return n ? Math.round(100 * r / n) : 0; }
-function fmtSecs(ms){ return (ms / 1000).toFixed(1) + " s"; }
+function fmtSecs(ms){
+  var t = ms / 1000, tenth = Math.round(t * 10) / 10;
+  // Two decimals when the time is not a clean tenth (so 0.35 s does not become 0.4 or 0.3).
+  return (Math.abs(t - tenth) < 0.0005 ? tenth.toFixed(1) : t.toFixed(2)) + " s";
+}
 function fmtClock(ms){ var t = ms / 1000, m = Math.floor(t / 60), r = t - m * 60; return m ? m + ":" + (r < 10 ? "0" : "") + r.toFixed(1) : r.toFixed(1) + " s"; }
 function accRow(label, r, n, noteOverride){
   var p = pctOf(r, n), cls = !n ? "" : p < 70 ? "weak" : p < 90 ? "mid" : "";
@@ -2082,7 +2496,7 @@ function cdRenderOpts(){
     $("cd-note").textContent = "A full 52-card deck, one flip at a time at your own pace. The clock starts on the first card. A whole deck always nets to zero, so you finish on 0 — a clean deck saves your time.";
   } else {
     h = '<div class="field"><label for="cd-conv">What you are given</label><select id="cd-conv"><option value="decks"' + (CD.opts.conv === "decks" ? " selected" : "") + '>Running count and decks left</option><option value="dealt"' + (CD.opts.conv === "dealt" ? " selected" : "") + '>Running count and cards dealt (work out the decks left)</option></select></div>';
-    $("cd-note").textContent = "True count = running count ÷ decks left out of 8, rounded to the nearest whole number. The shoe is 416 cards (8 × 52). Questions never land on an exact half.";
+    $("cd-note").textContent = "True count = running count ÷ decks left out of " + nDecks() + ", rounded to the nearest whole number. The shoe is " + shoeSize() + " cards (" + nDecks() + " × 52). Questions never land on an exact half.";
   }
   o.innerHTML = h;
   var sp = $("cd-speed"); if(sp) sp.addEventListener("change", function(){ CD.opts.speed = parseInt(sp.value, 10); });
@@ -2210,15 +2624,23 @@ function cdStartDeck(){
 }
 /* --- running count to true count --- */
 function cdConvQuestion(mode){
-  var decks, dealt = null, rc, tc, raw, guard = 0;
+  var size = shoeSize(), nd = nDecks(), decks, dealt = null, rc, tc, raw, guard = 0;
   do {
-    if(mode === "dealt"){ dealt = 26 * (1 + Math.floor(Math.random() * 14)); decks = (SHOE_SIZE - dealt) / 52; }
-    else decks = 1 + 0.5 * Math.floor(Math.random() * 14);
+    if(mode === "dealt"){
+      var minDealt = Math.max(4, Math.round(size * 0.05)), maxDealt = Math.max(minDealt + 4, size - Math.round(52 * 0.5));
+      dealt = minDealt + Math.floor(Math.random() * (maxDealt - minDealt + 1));
+      decks = (size - dealt) / 52;
+    } else {
+      var steps = Math.max(4, Math.round((nd - 0.5) / 0.5));
+      decks = Math.round((0.5 + 0.5 * (1 + Math.floor(Math.random() * steps))) * 10) / 10;
+      if(decks > nd) decks = nd;
+      if(decks < 0.5) decks = 0.5;
+    }
     var target = pickOf([-5,-4,-3,-2,-1,0,1,2,2,3,3,4,4,5,6,7,8,10]);
     rc = Math.round(target * decks + (Math.random() - 0.5) * decks);
     raw = rc / decks;
     guard++;
-  } while((Math.abs(Math.abs(raw - Math.trunc(raw)) - 0.5) < 0.06 || Math.abs(rc) > 60) && guard < 200);
+  } while((Math.abs(Math.abs(raw - Math.trunc(raw)) - 0.5) < 0.06 || Math.abs(rc) > 80 || decks < 0.5) && guard < 200);
   tc = roundTC(raw);
   return { rc: rc, decks: decks, dealt: dealt, raw: raw, tc: tc };
 }
@@ -2231,13 +2653,13 @@ function cdStartConv(){
     $("cd-fb").className = "feedback"; $("cd-fb").innerHTML = ""; $("cd-after").innerHTML = ""; cdStopBtn();
     $("cd-prog").textContent = "Question " + (sessN + 1) + (sessN ? " · " + sessR + " right" : ""); $("cd-bar").style.width = (sessN ? 100 * sessR / sessN : 0) + "%";
     $("cd-flash").innerHTML = '<div class="convq"><div><span class="k">Running count</span><b id="cd-q-rc">' + sgn(Q.rc) + '</b></div>'
-      + (mode === "dealt" ? '<div><span class="k">Cards dealt</span><b id="cd-q-dealt">' + Q.dealt + '</b><small>of 416</small></div>' : '<div><span class="k">Decks left</span><b id="cd-q-decks">' + Q.decks.toFixed(1) + '</b><small>of 8</small></div>') + '</div>';
+      + (mode === "dealt" ? '<div><span class="k">Cards dealt</span><b id="cd-q-dealt">' + Q.dealt + '</b><small>of ' + shoeSize() + '</small></div>' : '<div><span class="k">Decks left</span><b id="cd-q-decks">' + Q.decks.toFixed(1) + '</b><small>of ' + nDecks() + '</small></div>') + '</div>';
     $("cd-msg").textContent = "What is the true count? (whole number, rounded)";
     cdStepper(0, function(g){
       var ok = g === Q.tc, C = S.cnt.conv, m = C.byMode[mode] || (C.byMode[mode] = { n: 0, r: 0 });
       C.n++; m.n++; sessN++; if(ok){ C.r++; m.r++; sessR++; streak++; } else streak = 0;
       saveState(); cdRenderStats();
-      var how = (mode === "dealt" ? SHOE_SIZE + " − " + Q.dealt + " = " + (SHOE_SIZE - Q.dealt) + " cards left ÷ 52 = " + Q.decks.toFixed(1) + " decks. " : "")
+      var how = (mode === "dealt" ? shoeSize() + " − " + Q.dealt + " = " + (shoeSize() - Q.dealt) + " cards left ÷ 52 = " + Q.decks.toFixed(1) + " decks. " : "")
         + sgn(Q.rc) + " ÷ " + Q.decks.toFixed(1) + " = " + (Math.round(Q.raw * 100) / 100) + ", which rounds to a true count of " + sgn(Q.tc) + ".";
       var fb = $("cd-fb");
       fb.className = "feedback show " + (ok ? "right" : "wrong");
@@ -2280,7 +2702,8 @@ function indexEntries(rules){
   rules = rules || S.rules;
   var h17 = !!rules.h17, ls = !!rules.ls, E = [];
   function add(id, grp, name, o){ o.id = id; o.grp = grp; o.name = name; E.push(o); }
-  add("ins", "i18", "Insurance", { kind: "ins", up: "A", thr: 3, lo: "N", hi: "I", handLabel: "any hand" });
+  var fam = deckFamily(rules);
+  add("ins", "i18", "Insurance", { kind: "ins", up: "A", thr: insuranceIndex(rules), lo: "N", hi: "I", handLabel: "any hand" });
   if(ls){
     add("16v10x3", "i18", "16 vs 10 (3 cards)", { total: 16, n: 3, up: "10", thr: 0, lo: "H", hi: "S" });
     add("15v10x3", "i18", "15 vs 10 (3 cards)", { total: 15, n: 3, up: "10", thr: 4, lo: "H", hi: "S" });
@@ -2293,8 +2716,8 @@ function indexEntries(rules){
   add("tt5", "i18", "10-10 vs 5", { pair10: true, n: 2, up: "5", thr: 5, lo: "S", hi: "P" });
   add("tt6", "i18", "10-10 vs 6", { pair10: true, n: 2, up: "6", thr: 4, lo: "S", hi: "P" });
   add("10v10", "i18", "10 vs 10", { total: 10, n: 2, up: "10", thr: 4, lo: "H", hi: "D" });
-  add("11vA",  "i18", "11 vs A",  { total: 11, n: 2, up: "A", thr: h17 ? -1 : 1, lo: "H", hi: "D" });
-  add("9v2",   "i18", "9 vs 2",   { total: 9, n: 2, up: "2", thr: 1, lo: "H", hi: "D" });
+  add("11vA",  "i18", "11 vs A",  { total: 11, n: 2, up: "A", thr: (fam === 8 && !h17) ? 1 : (fam === 2 ? 0 : -1), lo: "H", hi: "D" });
+  add("9v2",   "i18", "9 vs 2",   { total: 9, n: 2, up: "2", thr: fam === 8 ? 1 : 0, lo: "H", hi: "D" });
   add("10vA",  "i18", "10 vs A",  { total: 10, n: 2, up: "A", thr: h17 ? 3 : 4, lo: "H", hi: "D" });
   add("9v7",   "i18", "9 vs 7",   { total: 9, n: 2, up: "7", thr: 3, lo: "H", hi: "D" });
   add("12v3",  "i18", "12 vs 3",  { total: 12, n: 2, up: "3", thr: 2, lo: "H", hi: "S" });
@@ -2320,7 +2743,7 @@ function indexEntries(rules){
 function ixEntryById(id, rules){ var l = indexEntries(rules); for(var i = 0; i < l.length; i++) if(l[i].id === id) return l[i]; return null; }
 function ixRanks(e){
   if(e.kind === "ins") { var a, b; do { a = mapTen(pickOf(["2","3","4","5","6","7","8","9","10"])); b = pickOf(["2","3","4","5","6","7","8","9"]); } while(false); return [a, b]; }
-  if(e.pair10){ var t = pickOf(TENS); return [t, t]; }
+  if(e.pair10){ return [pickOf(TENS), pickOf(TENS)]; }
   if(e.n === 3){
     var x, y, z, g = 0;
     do { x = 2 + Math.floor(Math.random() * 9); y = 2 + Math.floor(Math.random() * 9); z = e.total - x - y; g++; } while((z < 2 || z > 10) && g < 500);
@@ -2331,7 +2754,7 @@ function ixRanks(e){
 function ixCtx(cards, rules){ var two = cards.length === 2; return { canDouble: two, canSplit: two, canSurrender: two && !!rules.ls }; }
 function ixExpected(e, tc, cards, up, rules){
   rules = rules || S.rules;
-  if(e.kind === "ins") return insuranceCorrect(tc) ? "I" : "N";
+  if(e.kind === "ins") return insuranceCorrect(tc, rules) ? "I" : "N";
   return decide(cards, up, tc, rules, ixCtx(cards, rules)).play;
 }
 function ixPickTC(e){
@@ -2370,7 +2793,8 @@ function ixPick(){
   }
   var pool = ents.filter(function(e){ return mode === "all" || e.grp === mode; });
   if(!pool.length) return { empty: "Fab 4 surrender indices need late surrender. Turn it on from the Rules button and they appear here." };
-  if(mode === "all" && due.length && Math.random() < 0.4) return { entry: byId[due[0].id], tc: due[0].tc, srs: true };
+  var dueInMode = mode === "all" ? due : due.filter(function(it){ var e = byId[it.id]; return e && e.grp === mode; });
+  if(dueInMode.length && Math.random() < 0.4) return { entry: byId[dueInMode[0].id], tc: dueInMode[0].tc, srs: true };
   var e = pickOf(pool);
   return { entry: e, tc: ixPickTC(e) };
 }
@@ -2384,6 +2808,9 @@ function ixRenderTable(){
     return '<tr><th scope="row" class="rowh">' + esc(e.name) + '</th><td>' + esc(e.handLabel) + '</td><td>' + e.up + '</td><td class="num">' + sgn(e.thr) + '</td><td class="idx-rule">' + esc(e.text) + '</td><td>' + (e.grp === "fab4" ? "Fab 4" : "Illustrious 18") + '</td></tr>';
   });
   $("ix-table").innerHTML = '<thead><tr><th scope="col">Play</th><th scope="col">Hand</th><th scope="col">Dealer</th><th scope="col">Index</th><th scope="col">Rule</th><th scope="col">List</th></tr></thead><tbody>' + rows.join("") + '</tbody>';
+  var hint = $("ix-hint"), sc = $("ix-table") && $("ix-table").closest(".chart-scroll");
+  if(hint && sc) hint.hidden = sc.scrollWidth <= sc.clientWidth + 2;
+
 }
 function ixRenderStats(){
   var h = "", I = S.idx;
@@ -2393,8 +2820,8 @@ function ixRenderStats(){
 function ixRenderSub(){
   var R = S.rules, sent = rulesSentence(R);
   $("index-sub").textContent = "Flashcards for the deviations that matter: you see the hand, the dealer's card and the whole-number true count, then make the play. " + sent.charAt(0).toUpperCase() + sent.slice(1) + ". "
-    + (R.ls ? "Surrender is offered, so 16 vs 9, 10 and A are surrenders at every count on a two-card hand — the stand indices (16 vs 10 at 0, 15 vs 10 at +4, 16 vs 9 at +5) are drilled on three-card hands, and the Fab 4 surrender indices appear instead. " : "With no surrender, the stand indices for 16 vs 10 (0), 15 vs 10 (+4) and 16 vs 9 (+5) apply and the Fab 4 are not in play. ")
-    + (R.h17 ? "H17 moves 11 vs A to −1, 10 vs A to +3 and 15 vs A to −1. " : "S17 numbers: 11 vs A at +1, 10 vs A at +4, 15 vs A at +1. ")
+    + (R.ls ? (deckFamily(R)===8 ? "Surrender is offered, so 16 vs 9, 10 and A are surrenders at every count on a two-card hand — the stand indices (16 vs 10 at 0, 15 vs 10 at +4, 16 vs 9 at +5) are drilled on three-card hands, and the Fab 4 surrender indices appear instead. " : "Surrender is offered. In a one- or two-deck game you do not surrender 16 vs 9 as a basic-strategy play (and in single-deck S17 you also do not surrender 15 vs 10) — those stand indices are still drilled, and the Fab 4 appear for the surrenders that the count does change. ") : "With no surrender, the stand indices for 16 vs 10 (0), 15 vs 10 (+4) and 16 vs 9 (+5) apply and the Fab 4 are not in play. ")
+    + (deckFamily(R)===8 ? (R.h17 ? "H17 moves 11 vs A to −1, 10 vs A to +3 and 15 vs A to −1. " : "S17 numbers: 11 vs A at +1, 10 vs A at +4, 15 vs A at +1. ") : (deckFamily(R)===1 ? "Single-deck numbers: insurance at +2, 11 vs A is already a double (hit only below −1), 9 vs 2 is already a double (hit only below 0). " : "Double-deck numbers: 11 vs A is already a double (hit only below 0), 9 vs 2 is already a double (hit only below 0). "))
     + "Double after split does not move any of these indices.";
 }
 function ixNext(){
@@ -2501,7 +2928,8 @@ function spdStep(){
     if(!SP.running) return;
     var dt = Date.now() - SP.decStart, inTime = dt <= SP.target;
     SP.hands++; SP.times.push(dt);
-    if(right){ SP.right++; SP.score += 10; if(inTime){ SP.fast++; SP.score += 5; } } else SP.score -= 5;
+    if(inTime) SP.fast++;
+    if(right){ SP.right++; SP.score += 10; if(inTime) SP.score += 5; } else SP.score -= 5;
     SP.waiting = true; spdHud();
     SP.wait = setTimeout(spdStep, right ? 350 : 1100);
   }});
@@ -2573,17 +3001,41 @@ function initSpeed(){
 
 /* ================= house-edge model (8 decks, 3:2 unless told otherwise) ================= */
 function houseEdge(o){
-  var e = 0.43;                 /* 8 decks, S17, DAS, no surrender, 3:2, no resplit aces */
-  if(o.ls) e -= 0.07;
-  if(o.h17) e += 0.22;
+  /* Total-dependent basic strategy, 3:2, dealer peeks, no RSA, DAS on, no surrender — Wizard of Odds. */
+  var d = clampDecks(o.decks != null ? o.decks : nDecks());
+  var base = ({
+    1: { s: -0.1442, h: 0.0438 },
+    2: { s:  0.1923, h: 0.3911 },
+    4: { s:  0.3530, h: 0.5617 },
+    6: { s:  0.4062, h: 0.6184 },
+    8: { s:  0.4329, h: 0.6468 }
+  })[d];
+  var e = o.h17 ? base.h : base.s;
   if(!o.das) e += 0.14;
+  if(o.ls) e -= (d === 1 ? 0.03 : d === 2 ? 0.06 : 0.08);
   if(o.rsa) e -= 0.08;
   if(o.pay === "6:5") e += 1.39;
   return e;                     /* percent */
 }
 
 /* ================= Bankroll Lab ================= */
-var TC_DIST = [ {tc:-2,f:0.12},{tc:-1,f:0.18},{tc:0,f:0.16},{tc:1,f:0.14},{tc:2,f:0.12},{tc:3,f:0.09},{tc:4,f:0.06},{tc:5,f:0.05},{tc:6,f:0.04},{tc:7,f:0.04} ];
+/* Hi-Lo true-count frequencies at 75% penetration, from a shoe simulation
+   that uses the same round-to-nearest true count as the trainer. 8-deck
+   mass at TC +3 or higher is about 9%, not the older 28% table. */
+var TC_DIST_BY_DECKS = {
+  1: [{tc:-2,f:0.2665},{tc:-1,f:0.0767},{tc:0,f:0.3110},{tc:1,f:0.0791},{tc:2,f:0.0667},{tc:3,f:0.0570},{tc:4,f:0.0399},{tc:5,f:0.0313},{tc:6,f:0.0228},{tc:7,f:0.0491}],
+  2: [{tc:-2,f:0.2906},{tc:-1,f:0.1255},{tc:0,f:0.1701},{tc:1,f:0.1253},{tc:2,f:0.0847},{tc:3,f:0.0582},{tc:4,f:0.0406},{tc:5,f:0.0293},{tc:6,f:0.0208},{tc:7,f:0.0547}],
+  4: [{tc:-2,f:0.2371},{tc:-1,f:0.1538},{tc:0,f:0.2143},{tc:1,f:0.1547},{tc:2,f:0.0900},{tc:3,f:0.0560},{tc:4,f:0.0359},{tc:5,f:0.0224},{tc:6,f:0.0137},{tc:7,f:0.0222}],
+  6: [{tc:-2,f:0.1986},{tc:-1,f:0.1638},{tc:0,f:0.2620},{tc:1,f:0.1685},{tc:2,f:0.0896},{tc:3,f:0.0504},{tc:4,f:0.0293},{tc:5,f:0.0172},{tc:6,f:0.0092},{tc:7,f:0.0113}],
+  8: [{tc:-2,f:0.1766},{tc:-1,f:0.1711},{tc:0,f:0.2990},{tc:1,f:0.1746},{tc:2,f:0.0874},{tc:3,f:0.0442},{tc:4,f:0.0237},{tc:5,f:0.0121},{tc:6,f:0.0060},{tc:7,f:0.0054}]
+};
+function tcDist(rules){
+  var d = nDecks(rules);
+  return TC_DIST_BY_DECKS[d] || TC_DIST_BY_DECKS[8];
+}
+function tcFreqAtLeast(tc, rules){
+  return tcDist(rules).reduce(function(s, d){ return s + (d.tc >= tc ? d.f : 0); }, 0);
+}
 function spreadUnits(tc, spread){
   if(tc <= 1) return 1;
   if(tc === 2) return 2;
@@ -2591,15 +3043,58 @@ function spreadUnits(tc, spread){
   if(tc === 4) return Math.max(3, Math.round(2 * spread / 3));
   return spread;
 }
+function labNum(id){
+  var el = $(id), raw = el ? String(el.value).trim() : "";
+  if(raw === "" || raw === "-" || raw === "." || raw === "-.") return { raw: raw, blank: true, n: NaN };
+  var n = parseFloat(raw);
+  return { raw: raw, blank: false, n: n, ok: isFinite(n) };
+}
+function setLabErr(id, msg){
+  var el = $(id + "-err"), inp = $(id);
+  if(el){ el.hidden = !msg; el.textContent = msg || ""; }
+  if(inp){
+    if(msg) inp.setAttribute("aria-invalid", "true");
+    else inp.removeAttribute("aria-invalid");
+  }
+}
 function runLab(){
-  var bank = parseFloat($("lab-bank").value) || 0;
-  var unit = parseFloat($("lab-unit").value) || 0;
+  var bankI = labNum("lab-bank"), unitI = labNum("lab-unit"), hphI = labNum("lab-hph"), hoursI = labNum("lab-hours");
   var spread = parseInt($("lab-spread").value, 10);
-  var hph = parseFloat($("lab-hph").value) || 0;
-  var hours = parseFloat($("lab-hours").value) || 0;
-  var he = houseEdge({ h17: S.rules.h17, das: S.rules.das, ls: S.rules.ls, rsa: false, pay: "3:2" }) / 100;
+  var dist = tcDist();
+  var errs = [];
+  if(bankI.blank){ setLabErr("lab-bank", "Enter a bankroll."); errs.push("bank"); }
+  else if(!isFinite(bankI.n) || bankI.n <= 0){ setLabErr("lab-bank", "Bankroll must be a positive amount."); errs.push("bank"); }
+  else if(bankI.n < 100){ setLabErr("lab-bank", "Bankroll must be at least $100."); errs.push("bank"); }
+  else setLabErr("lab-bank", "");
+  if(unitI.blank){ setLabErr("lab-unit", "Enter a base unit."); errs.push("unit"); }
+  else if(!isFinite(unitI.n) || unitI.n <= 0){ setLabErr("lab-unit", "Base unit must be a positive amount."); errs.push("unit"); }
+  else if(unitI.n < 5){ setLabErr("lab-unit", "Base unit must be at least $5."); errs.push("unit"); }
+  else setLabErr("lab-unit", "");
+  if(hphI.blank || !isFinite(hphI.n) || hphI.n <= 0){ setLabErr("lab-hph", "Hands per hour must be greater than zero."); errs.push("hph"); }
+  else if(hphI.n < 20){ setLabErr("lab-hph", "Hands per hour must be at least 20."); errs.push("hph"); }
+  else setLabErr("lab-hph", "");
+  if(hoursI.blank || !isFinite(hoursI.n) || hoursI.n <= 0){ setLabErr("lab-hours", "Session length must be greater than zero."); errs.push("hours"); }
+  else setLabErr("lab-hours", "");
+  var warn = $("lab-warn");
+  if(warn){
+    warn.hidden = !errs.length;
+    warn.textContent = errs.length ? "Fix the highlighted fields — the lab won't use blank, zero, or negative amounts." : "";
+  }
+  if(errs.length){
+    $("lab-outs").innerHTML = "";
+    $("lab-note").textContent = "Enter a valid bankroll, unit, and session length to see edge, hourly EV, and risk of ruin.";
+    var he0 = houseEdge({ decks: nDecks(), h17: S.rules.h17, das: S.rules.das, ls: S.rules.ls, rsa: false, pay: "3:2" }) / 100;
+    var rows0 = dist.map(function(d){
+      return "<tr><th scope='row' class='rowh'>" + (d.tc > 0 ? "+" : "") + d.tc + "</th><td>—</td><td>—</td><td>" + (d.f * 100).toFixed(1) + "%</td><td>" + ((0.005 * d.tc - he0) * 100).toFixed(1) + "%</td></tr>";
+    }).join("");
+    $("lab-ramp-table").innerHTML =
+      "<tr><th scope='col'>True count</th><th scope='col'>Bet</th><th scope='col'>Amount</th><th scope='col'>How often</th><th scope='col'>Your edge</th></tr>" + rows0;
+    return;
+  }
+  var bank = bankI.n, unit = unitI.n, hph = hphI.n, hours = hoursI.n;
+  var he = houseEdge({ decks: nDecks(), h17: S.rules.h17, das: S.rules.das, ls: S.rules.ls, rsa: false, pay: "3:2" }) / 100;
   var evHand = 0, avgBet = 0, varHand = 0;
-  TC_DIST.forEach(function(d){
+  dist.forEach(function(d){
     var u = spreadUnits(d.tc, spread), bet = u * unit, edge = 0.005 * d.tc - he;
     evHand += d.f * bet * edge;
     avgBet += d.f * bet;
@@ -2620,13 +3115,24 @@ function runLab(){
   $("lab-outs").innerHTML = outs.map(function(o){
     return '<div class="out"><div class="k">' + o.k + '</div><div class="v">' + o.v + '</div><div class="n">' + o.n + '</div></div>';
   }).join("");
-  $("lab-note").textContent =
-    evHand <= 0 ? "This ramp doesn't beat the game: too much of your money rides at counts where you're still the underdog. Widen the spread or raise the unit relative to the minimum bet."
-    : ror > 0.15 ? "Expectation is positive but the ruin risk is real — the classic fix is a bigger bankroll or a smaller unit, not more hours. A common pro ceiling is ~5% risk of ruin; full-Kelly sizing would put the unit near " + fmt$(Math.max(5, Math.round(bank * edgePct / 1.26 / 5) * 5)) + " for this edge."
-    : "Positive expectation with a survivable ruin risk. The remaining enemy is time and table conditions: penetration and hands-per-hour move these numbers more than any index play.";
-  var rows = TC_DIST.map(function(d){
+  var kelly5 = Math.max(5, Math.round(bank * edgePct / 1.26 / 5) * 5);
+  var freqNote = " True-count frequencies come from a Hi-Lo shoe simulation at 75% penetration for " + decksPhrase() + ".";
+  if(evHand <= 0){
+    $("lab-note").textContent = "This ramp doesn't beat the game: too much of your money rides at counts where you're still the underdog. Widen the spread or raise the unit relative to the minimum bet." + freqNote;
+  } else if(ror > 0.15){
+    var cmp = unit > kelly5
+      ? " Your current unit of " + fmt$(unit) + " is larger than that, which is why ruin risk is elevated — drop the unit toward " + fmt$(kelly5) + ", or raise the bankroll, rather than playing more hours."
+      : " Your current unit of " + fmt$(unit) + " is already at or under that size; the remaining lever is a bigger bankroll, not a bigger unit.";
+    $("lab-note").textContent = "Expectation is positive but the ruin risk is high with this bankroll and unit. A common pro ceiling is about 5% risk of ruin. At this edge and bankroll, that ceiling implies a unit around " + fmt$(kelly5) + "." + cmp + freqNote;
+  } else {
+    var size = unit > kelly5
+      ? " A 5% ruin ceiling at this edge would size the unit around " + fmt$(kelly5) + "; your " + fmt$(unit) + " unit is a bit larger than that, but ruin risk is still in a survivable range."
+      : " A 5% ruin ceiling at this edge would size the unit around " + fmt$(kelly5) + "; your " + fmt$(unit) + " unit is at or under that, so the sizing is consistent.";
+    $("lab-note").textContent = "Positive expectation with a survivable ruin risk." + size + " Penetration and hands-per-hour still move these numbers more than any index play." + freqNote;
+  }
+  var rows = dist.map(function(d){
     var u = spreadUnits(d.tc, spread);
-    return "<tr><th scope='row' class='rowh'>" + (d.tc > 0 ? "+" : "") + d.tc + "</th><td>" + u + " u</td><td>" + fmt$(u * unit) + "</td><td>" + Math.round(d.f * 100) + "%</td><td>" + ((0.005 * d.tc - he) * 100).toFixed(1) + "%</td></tr>";
+    return "<tr><th scope='row' class='rowh'>" + (d.tc > 0 ? "+" : "") + d.tc + "</th><td>" + u + " u</td><td>" + fmt$(u * unit) + "</td><td>" + (d.f * 100).toFixed(1) + "%</td><td>" + ((0.005 * d.tc - he) * 100).toFixed(1) + "%</td></tr>";
   }).join("");
   $("lab-ramp-table").innerHTML =
     "<tr><th scope='col'>True count</th><th scope='col'>Bet</th><th scope='col'>Amount</th><th scope='col'>How often</th><th scope='col'>Your edge</th></tr>" + rows;
@@ -2634,26 +3140,32 @@ function runLab(){
 ["lab-bank","lab-unit","lab-spread","lab-hph","lab-hours"].forEach(function(id){
   $(id).addEventListener("input", runLab);
   $(id).addEventListener("change", runLab);
+  $(id).addEventListener("blur", function(){
+    var el = $(id), v = parseFloat(el.value), min = parseFloat(el.getAttribute("min"));
+    if(el.type === "number" && isFinite(min) && (!isFinite(v) || v < min)){ el.value = String(min); runLab(); }
+  });
 });
 
 /* ================= Game Scorer ================= */
 function syncScorerFromRules(){
+  $("sc-decks").value = String(nDecks());
   $("sc-h17").value = S.rules.h17 ? "H" : "S";
   $("sc-das").value = S.rules.das ? "1" : "0";
   $("sc-ls").value = S.rules.ls ? "1" : "0";
 }
 function runScorer(){
-  var h17 = $("sc-h17").value === "H", das = $("sc-das").value === "1", ls = $("sc-ls").value === "1";
+  var decks = clampDecks($("sc-decks").value), h17 = $("sc-h17").value === "H", das = $("sc-das").value === "1", ls = $("sc-ls").value === "1";
   var rsa = $("sc-rsa").value === "1", pay = $("sc-pay").value, pen = parseInt($("sc-pen").value, 10);
   $("sc-pen-txt").textContent = pen + "%";
-  var edge = houseEdge({ h17: h17, das: das, ls: ls, rsa: rsa, pay: pay });
+  var edge = houseEdge({ decks: decks, h17: h17, das: das, ls: ls, rsa: rsa, pay: pay });
   var grade = edge <= 0.30 ? "A+" : edge <= 0.45 ? "A" : edge <= 0.55 ? "B" : edge <= 0.70 ? "C" : edge <= 0.90 ? "D" : "F";
   $("sc-grade").textContent = grade;
   $("sc-edge").textContent = "House edge " + edge.toFixed(2) + "%";
   $("sc-cost").textContent = "$" + edge.toFixed(2);
-  $("sc-cards").textContent = Math.round(SHOE_SIZE * pen / 100);
+  $("sc-cards").textContent = Math.round(decks * 52 * pen / 100);
   var verdict;
   if(pay === "6:5") verdict = "A 6:5 payout is a trap wearing a blackjack costume — it costs more than every other rule on this page combined. Don't sit down.";
+  else if(edge <= 0) verdict = "A player-advantage game under basic strategy alone — usually a short shoe with generous rules and a 3:2 payout. Sit down.";
   else if(edge <= 0.45) verdict = "A genuinely good game. Basic strategy keeps the cost near the floor, and a counter can beat it outright with a normal spread.";
   else if(edge <= 0.60) verdict = "A playable game, nothing more. Fine for basic-strategy practice; a counter needs deep penetration and a wide spread to make it pay.";
   else verdict = "An expensive seat. Every rule you gave up is a raise you handed the house — find a better table before you find a bigger bet.";
@@ -2667,7 +3179,7 @@ function runScorer(){
   $("sc-counter").textContent = counter;
   $("sc-counter-n").textContent = cn;
 }
-["sc-h17","sc-das","sc-ls","sc-rsa","sc-pay","sc-pen"].forEach(function(id){
+["sc-decks","sc-h17","sc-das","sc-ls","sc-rsa","sc-pay","sc-pen"].forEach(function(id){
   $(id).addEventListener("input", runScorer);
   $(id).addEventListener("change", runScorer);
 });
@@ -2675,8 +3187,8 @@ function runScorer(){
 /* ================= charts ================= */
 var UPS = ["2","3","4","5","6","7","8","9","10","A"];
 var CODE_TEXT = { H:"Hit", S:"Stand", D:"Double, otherwise hit", Ds:"Double, otherwise stand", P:"Split", R:"Surrender, otherwise hit", Rs:"Surrender, otherwise stand", Rp:"Surrender, otherwise split" };
-function chartRows(){
-  var hard = [{ label:"5–8", cards:["6","2"] }];
+function chartRows(rules){
+  var hard = deckFamily(rules) === 1 ? [{ label:"5–7", cards:["5","2"] }, { label:"8", cards:["6","2"] }] : [{ label:"5–8", cards:["6","2"] }];
   [9,10,11,12,13,14,15,16,17].forEach(function(t){
     var a = Math.min(10, t - 2), b = t - a;
     hard.push({ label:String(t), cards:[String(a), String(b)] });
@@ -2687,7 +3199,7 @@ function chartRows(){
   return { hard: hard, soft: soft, pair: pair };
 }
 function chartData(rules){
-  var rows = chartRows(), out = {};
+  var rows = chartRows(rules), out = {};
   ["hard","soft","pair"].forEach(function(kind){
     out[kind] = rows[kind].map(function(r){
       var cards = r.cards.map(function(x){ return { rank:x, suit:"♠" }; });
@@ -2697,11 +3209,14 @@ function chartData(rules){
   return out;
 }
 function chartTable(el, kindName, rows, defRows){
+  var defBy = {};
+  if(defRows) defRows.forEach(function(r){ defBy[r.label] = r.cells; });
   var html = "<tr><th scope='col'><span class='sr-only'>" + kindName + " / dealer upcard</span></th>" + UPS.map(function(u){ return "<th scope='col'>" + u + "</th>"; }).join("") + "</tr>";
-  rows.forEach(function(r, ri){
+  rows.forEach(function(r){
     html += "<tr><th scope='row' class='rowh'>" + r.label + "</th>" + r.cells.map(function(code, ci){
-      var cls = "a" + codeLetter(code) + (defRows && defRows[ri].cells[ci] !== code ? " diff" : "");
-      return "<td class='" + cls + "' title='" + kindName + " " + r.label + " vs " + UPS[ci] + ": " + CODE_TEXT[code] + "'><span aria-hidden='true'>" + code + "</span><span class='sr-only'>" + CODE_TEXT[code] + "</span></td>";
+      var drow = defBy[r.label], diff = drow && drow[ci] !== code;
+      var cls = "a" + codeLetter(code) + (diff ? " diff" : "");
+      return "<td class='" + cls + "' title='" + kindName + " " + r.label + " vs " + UPS[ci] + ": " + (CODE_TEXT[code] || code) + "'><span aria-hidden='true'>" + code + "</span><span class='sr-only'>" + (CODE_TEXT[code] || code) + "</span></td>";
     }).join("") + "</tr>";
   });
   el.innerHTML = html;
@@ -2712,11 +3227,13 @@ function buildCharts(){
   chartTable($("chart-soft"), "Soft", d.soft, def && def.soft);
   chartTable($("chart-pair"), "Pair", d.pair, def && def.pair);
   var R = S.rules, n = $("chart-diff-note");
-  if(def){ n.hidden = false; n.textContent = "Gold-outlined cells differ from the default S17 · DAS · LS chart."; } else n.hidden = true;
-  var t = "Pairs of 5s and 10s are never split — play 5-5 as hard 10 and 10-10 as hard 20. Always split aces and 8s" + (R.h17 && R.ls ? " (the one exception: 8-8 against an ace when the dealer hits soft 17 — surrender, and split if you can't)" : "") + ". "
-    + "Hard 11 against an ace is " + (R.h17 ? "a double (dealer hits soft 17)" : "a hit (dealer stands on soft 17)") + ". "
-    + (R.ls ? "Surrender hard 16 against 9, 10, or ace and hard 15 against a 10" + (R.h17 ? ", plus hard 15 and hard 17 against an ace" : "") + "; a pair of 8s is split, not surrendered" + (R.h17 ? " (except against an ace, above)" : "") + ". Surrender is only for your first two cards." : "Late surrender is off, so every Surrender cell becomes a hit (or stand on 17).")
-    + (R.das ? "" : " Without double-after-split, 2-2 and 3-3 are only split against 4–7, 4-4 is never split, and 6-6 is split against 3–6.");
+  if(def){ n.hidden = false; n.textContent = "Gold-outlined cells differ from the default 8-deck S17 · DAS · LS chart."; } else n.hidden = true;
+  var fam = deckFamily(R);
+  var t = "Wizard of Odds " + (fam===1?"single-deck":fam===2?"double-deck":"4–8 deck") + " total-dependent chart. Pairs of 5s and 10s are never split — play 5-5 as hard 10 and 10-10 as hard 20. Always split aces and 8s" + (fam!==1 && R.h17 && R.ls ? " (the one exception: 8-8 against an ace when the dealer hits soft 17 — surrender, and split if you can't)" : "") + ". "
+    + "Hard 11 against an ace is " + ((R.h17 || fam!==8) ? "a double" : "a hit (4–8 decks, dealer stands on soft 17)") + ". "
+    + (R.ls ? (fam===8 ? "Surrender hard 16 against 9, 10, or ace and hard 15 against a 10" : fam===2 ? "Surrender hard 16 against 10 or ace and hard 15 against a 10 (not 16 against 9)" : "Surrender hard 16 against 10 or ace" + (R.h17 ? ", and hard 15 and 17 against an ace" : "") + " (not 15 against 10 or 16 against 9)")
+      + (fam!==1 && R.h17 ? ", plus hard 15 and hard 17 against an ace" : "") + (fam===1 && R.h17 ? "" : "") + "; a pair of 8s is split, not surrendered" + (fam!==1 && R.h17 ? " (except against an ace, above)" : "") + (fam===1 ? "; in a single-deck game, 7-7 against a 10 is surrendered (or stood if surrender is off)" : "") + ". Surrender is only for your first two cards." : "Late surrender is off, so every Surrender cell becomes a hit (or stand on 17" + (fam===1 ? " — and 7-7 against a 10 stands" : "") + ").")
+    + (R.das ? "" : (fam===1 ? " Without double-after-split, 2-2 is only split against 3–7, 3-3 against 4–7 (not 8), 4-4 is doubled against 5–6, and 6-6 is not split against 7." : " Without double-after-split, 2-2 and 3-3 are only split against 4–7, 4-4 is never split, and 6-6 is " + (fam===2?"still split against 2–6 (not 7).":"split against 3–6.")));
   $("chart-notes").textContent = t;
   updateChartHint();
 }
@@ -2781,21 +3298,33 @@ document.addEventListener("keydown", function(e){
 
 /* ================= PWA ================= */
 var deferredInstall = null;
+function isStandalone(){
+  return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+}
+function syncInstallPanel(){
+  var p = $("install-panel");
+  if(!p) return;
+  p.hidden = isStandalone() || activeViewName() !== "path";
+  if(isStandalone()) $("install-btn").hidden = true;
+  else if(deferredInstall) $("install-btn").hidden = false;
+}
 window.addEventListener("beforeinstallprompt", function(e){
-  e.preventDefault(); deferredInstall = e; $("install-btn").hidden = false;
+  e.preventDefault(); deferredInstall = e; if(!isStandalone()) $("install-btn").hidden = false;
 });
 $("install-btn").addEventListener("click", function(){
   if(!deferredInstall) return;
   deferredInstall.prompt();
   deferredInstall.userChoice.then(function(){ deferredInstall = null; $("install-btn").hidden = true; });
 });
-window.addEventListener("appinstalled", function(){ $("install-btn").hidden = true; });
+window.addEventListener("appinstalled", function(){ deferredInstall = null; $("install-btn").hidden = true; syncInstallPanel(); });
 if("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)){
   window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
 }
 
 /* ================= init ================= */
 loadState();
+if(typeof syncStorageWarn === "function") syncStorageWarn();
+if(("ontouchstart" in window) || (navigator.maxTouchPoints || 0) > 0) document.documentElement.classList.add("touch");
 syncRulesUI();
 updateCopy();
 renderPath();
@@ -2811,6 +3340,8 @@ runLab();
 runScorer();
 renderReview();
 updateTabFade();
+syncInstallPanel();
+if(S.view && S.view !== "path") showView(S.view);
 
 </script>
 </body>

@@ -22,22 +22,30 @@ REF = [
  ("13 vs 3","i18","3",-2,-2,"H","S","all"),
  ("14 vs 10","fab4","10",3,3,"H","R","ls"), ("15 vs 10","fab4","10",0,0,"H","R","ls"), ("15 vs 9","fab4","9",2,2,"H","R","ls"), ("15 vs A","fab4","A",1,-1,"H","R","ls"),
 ]
-def ref_for(h17, ls):
+def ref_for(h17, ls, decks=8):
+    fam = 1 if decks<=1 else 2 if decks==2 else 8
     out = {}
     for name, grp, up, t17, th17, lo, hi, ap in REF:
         if ap == "ls" and not ls: continue
         if ap == "nols" and ls: continue
-        out[(name, grp)] = dict(up=up, thr=(th17 if h17 else t17), lo=lo, hi=hi)
+        thr = (th17 if h17 else t17)
+        if name == "Insurance":
+            thr = 2 if fam==1 else 3
+        elif name == "11 vs A":
+            thr = 1 if (fam==8 and not h17) else (0 if fam==2 else -1)
+        elif name == "9 vs 2":
+            thr = 1 if fam==8 else 0
+        out[(name, grp)] = dict(up=up, thr=thr, lo=lo, hi=hi)
     return out
 def sgn(n): return ("+" if n > 0 else "") + str(n)
 
 def engine_checks(pg):
-    print("--- index values vs reference (all 8 rule combos) ---")
+    print("--- index values vs reference (1, 2 and 4-8 deck families × 8 rule combos) ---")
     total_pairs = 0
-    for h17, das, ls in itertools.product([False, True], [True, False], [True, False]):
-        rules = {"h17": h17, "das": das, "ls": ls}
+    for decks, h17, das, ls in itertools.product([1, 2, 8], [False, True], [True, False], [True, False]):
+        rules = {"decks": decks, "h17": h17, "das": das, "ls": ls}
         ents = pg.evaluate("(r)=>indexEntries(r)", rules)
-        ref = ref_for(h17, ls)
+        ref = ref_for(h17, ls, decks)
         got = {(e["name"], e["grp"]): e for e in ents}
         check(f"index list names {rules}", set(got) == set(ref), f"extra={set(got)-set(ref)} missing={set(ref)-set(got)}")
         n18 = sum(1 for e in ents if e["grp"] == "i18"); nfab = sum(1 for e in ents if e["grp"] == "fab4")
@@ -152,10 +160,11 @@ def count_tests(b, vp, tag):
             rc = int(pg.inner_text("#cd-q-rc").replace("−", "-").replace("+", ""))
             if mode == "decks":
                 decks = float(pg.inner_text("#cd-q-decks")); dealt = None
-                if not (1 <= decks <= 7.5 and (decks * 2) == int(decks * 2)): bad.append(("decks", decks))
+                nd = pg.evaluate('nDecks()'); 
+                if not (0.5 <= decks <= nd + 1e-9): bad.append(("decks", decks, nd))
             else:
-                dealt = int(pg.inner_text("#cd-q-dealt")); decks = (416 - dealt) / 52
-                if not (dealt % 26 == 0 and 26 <= dealt <= 364): bad.append(("dealt", dealt))
+                size = pg.evaluate('shoeSize()'); dealt = int(pg.inner_text("#cd-q-dealt")); decks = (size - dealt) / 52
+                if not (4 <= dealt <= size - 26): bad.append(("dealt", dealt, size))
             raw = rc / decks
             if abs(abs(raw - math.trunc(raw)) - 0.5) < 0.06: half += 1
             want = rnd(raw)
@@ -167,7 +176,7 @@ def count_tests(b, vp, tag):
             if not deliberately_wrong: nright += 1
             if ((("+" if rc > 0 else "") + str(rc)) not in fbt) and mode == "decks": bad.append(("explain", fbt[:60]))
             pg.click("#cd-nextq")
-        check(T(f"true count ({mode}): 30 questions graded correctly, decks ≤ 7.5, never .5"), not bad and half == 0, str(bad[:3]) + f" half={half}")
+        check(T(f"true count ({mode}): 30 questions graded correctly, never .5"), not bad and half == 0, str(bad[:3]) + f" half={half}")
         C = pg.evaluate("S.cnt.conv.byMode")[mode]
         check(T(f"true count ({mode}): accuracy tracked ({nright}/30)"), C["n"] == 30 and C["r"] == nright, json.dumps(C))
         if mode == "dealt": pg.screenshot(path=OUT + f"v3-{tag}-count-true.png")

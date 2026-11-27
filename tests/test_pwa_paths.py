@@ -15,7 +15,7 @@ check("manifest icon paths are relative", all(not i["src"].startswith(("/", "htt
 check("sw.js has no root-absolute asset paths", not re.search(r'["\']/(?!/)[A-Za-z]', sw.split("self.addEventListener")[0]), sw[:300])
 for i in m["icons"]:
     s, body = get(i["src"]); check(f"icon {i['src']} loads ({i['sizes']})", s == 200 and len(body) > 100)
-check("sw cache name is v3", 'bjt-v3' in sw, re.findall(r'var CACHE = "[^"]+"', sw)[0] if 'CACHE' in sw else "")
+check("sw cache name is v4", 'bjt-v4' in sw, re.findall(r'var CACHE = "[^"]+"', sw)[0] if 'CACHE' in sw else "")
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True, executable_path="/usr/bin/google-chrome", args=["--no-sandbox"])
     ctx = b.new_context(viewport={"width": 1280, "height": 800}); pg = ctx.new_page()
@@ -27,8 +27,8 @@ with sync_playwright() as p:
     pg.reload(wait_until="networkidle"); pg.wait_for_timeout(600)
     check("page is controlled by the SW after reload", pg.evaluate("!!navigator.serviceWorker.controller"))
     keys = pg.evaluate("caches.keys()")
-    check("cache bjt-v3-1 present (old caches gone)", keys == ["bjt-v3-1"], str(keys))
-    cached = pg.evaluate("caches.open('bjt-v3-1').then(c=>c.keys()).then(k=>k.map(r=>new URL(r.url).pathname))")
+    check("cache bjt-v4-2 present (old caches gone)", keys == ["bjt-v4-2"], str(keys))
+    cached = pg.evaluate("caches.open('bjt-v4-2').then(c=>c.keys()).then(k=>k.map(r=>new URL(r.url).pathname))")
     base_path = urllib.parse.urlparse(BASE).path
     check("every precached URL is inside the app path", all(c.startswith(base_path) for c in cached) and len(cached) >= 8, str(cached))
     mf = pg.evaluate("(function(){var l=document.querySelector('link[rel=manifest]');return l.href;})()")

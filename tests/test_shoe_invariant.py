@@ -1,10 +1,10 @@
-"""Assert the simulator shoe never exceeds 416 cards and stays in sync with cards dealt."""
+"""Assert the simulator shoe never exceeds the shoe size and stays in sync with cards dealt."""
 import sys
 from playwright.sync_api import sync_playwright
 
 URL = "http://127.0.0.1:8766/index.html"
 SCRIPT = r"""
-() => {
+(nd) => {
   function fail(msg, extra){ return { ok:false, msg: msg, extra: extra || null }; }
   function snapshot(){
     var onTable = (SIM.dealer ? SIM.dealer.length : 0);
@@ -17,25 +17,25 @@ SCRIPT = r"""
   }
   function check(tag){
     var s = snapshot();
-    if (s.left + s.dealt !== SHOE_SIZE)
-      return fail(tag + ": cards left (" + s.left + ") + dealt (" + s.dealt + ") = " + (s.left + s.dealt) + ", expected " + SHOE_SIZE, s);
-    if (s.left > SHOE_SIZE) return fail(tag + ": cards left " + s.left + " > 416", s);
+    if (s.left + s.dealt !== shoeSize())
+      return fail(tag + ": cards left (" + s.left + ") + dealt (" + s.dealt + ") = " + (s.left + s.dealt) + ", expected " + shoeSize(), s);
+    if (s.left > shoeSize()) return fail(tag + ": cards left " + s.left + " > " + shoeSize(), s);
     if (s.dealt < 0) return fail(tag + ": dealt negative", s);
-    if (s.decks > 8 + 1e-12) return fail(tag + ": decks left " + s.decks + " > 8", s);
+    if (s.decks > nDecks() + 1e-12) return fail(tag + ": decks left " + s.decks + " > " + nDecks(), s);
     var expectTxt = s.left + " cards";
     if (s.shown !== expectTxt) return fail(tag + ": display '" + s.shown + "' != '" + expectTxt + "'", s);
-    var expectDecks = s.decks.toFixed(1) + " of 8";
+    var expectDecks = s.decks.toFixed(1) + " of " + nDecks();
     if (s.decksShown !== expectDecks) return fail(tag + ": decks display '" + s.decksShown + "' != '" + expectDecks + "'", s);
     return null;
   }
 
-  S.unlockAll = true; S.rules = { h17:false, das:true, ls:true };
+  S.unlockAll = true; S.rules = { decks: nd, h17:false, das:true, ls:true };
   if (!SIM) initSim();
   SIM.shoe = buildShoe(); SIM.dealt = 0; SIM.rc = 0; SIM.phase = "bet";
   SIM.bank = 5000; SIM.bet = 0; SIM.hands = []; SIM.dealer = [];
   renderSim();
   var err = check("fresh shoe"); if (err) return err;
-  if (SIM.shoe.length !== 416) return fail("fresh shoe is " + SIM.shoe.length + " cards, expected 416");
+  if (SIM.shoe.length !== shoeSize()) return fail("fresh shoe is " + SIM.shoe.length + " cards, expected " + shoeSize());
 
   function plant(ranks){
     var n = ranks.length, i;
@@ -44,7 +44,7 @@ SCRIPT = r"""
   }
   function forceDeal(ranks, bank, bet){
     if (SIM.phase !== "bet") { /* shouldn't start mid-hand */ }
-    if (SIM.shoe.length < ranks.length + 16 || SIM.dealt >= CUT_CARDS - 16){
+    if (SIM.shoe.length < ranks.length + 16 || SIM.dealt >= cutCards() - 16){
       SIM.shoe = buildShoe(); SIM.dealt = 0; SIM.rc = 0;
     }
     SIM.phase = "bet";
@@ -117,7 +117,8 @@ SCRIPT = r"""
   // Random rounds until we have 200+ completed hands/rounds
   var kinds = ["basic","split","surrender","bust","ins-yes"];
   var spun = 0;
-  while (counts.rounds < 220 && spun < 400){
+  var target = (nd === 8 ? 220 : 80);
+  while (counts.rounds < target && spun < target * 2){
     spun++;
     if (SIM.bank < 200) SIM.bank += 1000;
     var prefer = kinds[spun % kinds.length];
@@ -126,7 +127,7 @@ SCRIPT = r"""
     else if (prefer === "ins-yes") forceDeal(["10","A","7","8","2"]);
     else if (prefer === "bust") forceDeal(["10","10","6","4","K","Q"]);
     else {
-      if (SIM.shoe.length < 60 || SIM.dealt >= CUT_CARDS){ SIM.shoe = buildShoe(); SIM.dealt = 0; SIM.rc = 0; }
+      var minLeft = Math.max(10, Math.min(60, Math.round(shoeSize() * 0.12))); if (SIM.shoe.length < minLeft || SIM.dealt >= cutCards()){ SIM.shoe = buildShoe(); SIM.dealt = 0; SIM.rc = 0; }
       SIM.phase = "bet"; SIM.bet = 25; simDeal();
     }
     err = check("random deal " + spun); if (err) return err;
@@ -135,7 +136,7 @@ SCRIPT = r"""
     err = check("random settled " + spun); if (err) return err;
   }
 
-  if (counts.rounds < 200) return fail("only played " + counts.rounds + " rounds");
+  if (counts.rounds < (nd === 8 ? 200 : 70)) return fail("only played " + counts.rounds + " rounds");
   if (counts.splits < 10) return fail("too few splits: " + counts.splits, counts);
   if (counts.surrenders < 10) return fail("too few surrenders: " + counts.surrenders, counts);
   if (counts.insurance < 10) return fail("too few insurance: " + counts.insurance, counts);
@@ -155,15 +156,20 @@ def main():
         pg.evaluate("S.unlockAll=true; renderPath(); refreshStrip();")
         pg.click("#tab-sim")
         pg.wait_for_timeout(100)
-        result = pg.evaluate(SCRIPT)
+        results = []
+        for nd in (1, 2, 4, 6, 8):
+            result = pg.evaluate(SCRIPT, nd)
+            results.append((nd, result))
+            print("decks", nd, result)
+            if not result or not result.get("ok"):
+                print("FAIL", nd, result)
+                print("console errors:", errs)
+                sys.exit(1)
         b.close()
-    print(result)
     if errs:
         print("console errors:", errs)
-    if not result or not result.get("ok"):
-        print("FAIL", result)
         sys.exit(1)
-    print("PASS 200+ shoe invariant:", result["counts"], "final", result["final"])
+    print("PASS shoe invariant for decks", [n for n,_ in results], {n: r["counts"] for n,r in results})
     sys.exit(0)
 
 if __name__ == "__main__":

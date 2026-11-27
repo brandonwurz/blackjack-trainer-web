@@ -75,8 +75,8 @@ cases = [
  ("10v10 TC3 hit",   C("6","4"),"10",3,S17,FULL,"H"),
  ("14v10 LS TC (nonsurr) 14 stand?",C("10","4"),"10",0,S17,FULL,"H"),
 ]
-# K-Q vs 6 is hard 20 (not a pair): expected S at all counts except ten-split indices which require equal ranks
-cases[[c[0] for c in cases].index("K-Q v6 TC9 stand (not a pair)")] = ("K-Q v6 TC9 stand (not a pair)", C("K","Q"),"6",9,S17,FULL,"S")
+# K-Q is a 10-10 pair (any two ten-value cards). At TC 9 vs 6 the I18 index is split.
+cases[[c[0] for c in cases].index("K-Q v6 TC9 stand (not a pair)")] = ("K-Q v6 TC9 split (ten pair)", C("K","Q"),"6",9,S17,FULL,"P")
 fail=0
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True, executable_path="/usr/bin/google-chrome", args=["--no-sandbox"])
@@ -92,7 +92,7 @@ with sync_playwright() as p:
         got = pg.evaluate("(t)=>insuranceCorrect(t)", tc)
         ok = got==exp; fail += (not ok); print("PASS " if ok else "FAIL ","insurance TC",tc,"->",got)
     # pair detection
-    for a,bb,exp in [("10","K",False),("K","K",True),("J","Q",False),("8","8",True)]:
+    for a,bb,exp in [("10","K",True),("K","K",True),("J","Q",True),("8","8",True),("10","9",False)]:
         got = pg.evaluate("([a,b])=>handValue([{rank:a,suit:'♠'},{rank:b,suit:'♥'}]).pair",[a,bb])
         ok = got==exp; fail += (not ok); print("PASS " if ok else "FAIL ","pair",a,bb,"->",got)
     print("console errors:", errs)
